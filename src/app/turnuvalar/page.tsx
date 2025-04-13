@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Calendar, Clock, Trophy, Filter } from 'lucide-react';
+import { Users, Calendar, Trophy, Filter } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import Image from 'next/image';
 
