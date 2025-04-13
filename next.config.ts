@@ -1,15 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
+    domains: ['picsum.photos'],
   },
-}
+  output: 'standalone',
+  reactStrictMode: true,
+  swcMinify: true,
+};
 
-export default nextConfig
+export default nextConfig;
