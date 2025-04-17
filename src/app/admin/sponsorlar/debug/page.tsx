@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserRank } from '../../../page';
+import { UserRank } from '@/types/user';
 import { getSponsors } from '@/services/SponsorsService';
 import { ChevronLeft } from 'lucide-react';
 import ClientLayout from '../../../../components/ClientLayout';

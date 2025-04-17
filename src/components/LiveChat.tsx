@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserRank } from '@/app/page';
+import { UserRank } from '@/types/user';
 import { Send, X, MessageSquare, ChevronDown, ChevronUp, Shield } from 'lucide-react';
 import { useSiteSettings } from './SiteSettingsProvider';
 

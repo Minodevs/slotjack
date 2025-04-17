@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserRank } from '../../page';
+import { UserRank } from '@/types/user';
 import { 
   ChevronLeft, Filter, Search, ArrowUp, ArrowDown, 
   Download, Coins, CreditCard, Calendar, User, Trash, RefreshCw,

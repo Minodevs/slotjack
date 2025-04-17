@@ -15,7 +15,7 @@ import {
   User,
   Shield,
 } from 'lucide-react';
-import { UserRank } from '@/app/page';
+import { UserRank } from '@/types/user';
 
 const navigationItems = [
   { name: 'Ana Sayfa', href: '/', icon: Home },

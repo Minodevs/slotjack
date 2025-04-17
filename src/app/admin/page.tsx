@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserRank } from '../page';
+import { UserRank } from '@/types/user';
 import { 
   Users, Shield, MessageSquare, Calendar, Ticket, 
   Trophy, ShoppingBag, Heart, Settings, Home, Youtube, CreditCard, Gift

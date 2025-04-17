@@ -6,6 +6,15 @@ const STRIPE_PUBLIC_KEY = 'pk_test_TYooMQauvdEDq54NiTphI7jx';
 let stripePromise: Promise<any> | null = null;
 
 /**
+ * Payment type enum for different payment scenarios
+ */
+export enum PaymentType {
+  SPIN_PURCHASE = 'spin_purchase',
+  COIN_PURCHASE = 'coin_purchase',
+  ITEM_PURCHASE = 'item_purchase'
+}
+
+/**
  * Initialize and get the Stripe instance
  */
 export const getStripe = () => {

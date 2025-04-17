@@ -16,7 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { WinSubmission, getSubmissions, deleteSubmission } from '@/services/SubmissionsService';
-import { UserRank } from '@/app/page';
+import { UserRank } from '@/types/user';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminWinSubmissionsPage() {

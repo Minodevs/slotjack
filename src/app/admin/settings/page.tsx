@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserRank } from '../../page';
+import { UserRank } from '@/types/user';
 import { 
   ChevronLeft, Globe, Palette, Mail, Phone, 
   Link as LinkIcon, Save, RefreshCw, AlertCircle, ImageIcon, Upload, Loader

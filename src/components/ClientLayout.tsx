@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Home, BarChart2, Trophy, Gift, Calendar, ShoppingBag, Ticket, MessageSquare, LogOut, Coins, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { UserRank } from '@/app/page';
+import { UserRank } from '@/types/user';
 import LivestreamBanner from './LivestreamBanner';
 import { useSiteSettings } from './SiteSettingsProvider';
 import LiveChat from './LiveChat';
