@@ -15,9 +15,12 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react';
-import { WinSubmission, getSubmissions, deleteSubmission } from '@/services/SubmissionsService';
+import { WinSubmission, getSubmissions, deleteSubmission, addSubmission } from '@/services/SubmissionsService';
 import { UserRank } from '@/types/user';
 import { v4 as uuidv4 } from 'uuid';
+
+// Custom timestamp implementation to replace Firebase's serverTimestamp
+const createTimestamp = () => Date.now();
 
 export default function AdminWinSubmissionsPage() {
   const { user } = useAuth();
@@ -33,8 +36,41 @@ export default function AdminWinSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<WinSubmission | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [currentSubmission, setCurrentSubmission] = useState<WinSubmission | null>(null);
+  const [currentSubmission, setCurrentSubmission] = useState<Partial<WinSubmission>>({
+    userId: "",
+    userName: "",
+    gameName: "",
+    bet: 0,
+    winAmount: 0,
+    sponsor: "",
+    date: new Date().toISOString().split('T')[0],
+    imageUrl: "",
+    link: "",
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Debugging hook to identify any problematic properties
+  useEffect(() => {
+    // Check for properties that aren't in the WinSubmission interface
+    const validProps = ['id', 'userId', 'userName', 'userAvatar', 'gameName', 'bet', 'winAmount', 
+                       'sponsor', 'sponsorLogo', 'date', 'link', 'imageUrl', 'timestamp'];
+    
+    // Output any properties in currentSubmission that aren't in the valid list
+    const currentProps = Object.keys(currentSubmission);
+    const invalidProps = currentProps.filter(prop => !validProps.includes(prop));
+    
+    if (invalidProps.length > 0) {
+      console.error('Invalid properties found in currentSubmission:', invalidProps);
+      
+      // Clean up the currentSubmission object by removing invalid properties
+      const cleanSubmission = { ...currentSubmission };
+      invalidProps.forEach(prop => delete cleanSubmission[prop as keyof typeof cleanSubmission]);
+      
+      // Update the state with the cleaned object
+      setCurrentSubmission(cleanSubmission);
+    }
+  }, [currentSubmission]);
 
   useEffect(() => {
     // Check if user is admin, if not redirect to home
@@ -236,23 +272,81 @@ export default function AdminWinSubmissionsPage() {
     document.body.removeChild(link);
   };
 
-  const handleAddSubmission = () => {
-    setModalMode('add');
-    setCurrentSubmission({
+  const handleAddSubmission = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Create a new submission with the correct properties
+    const newSubmission: WinSubmission = {
       id: uuidv4(),
-      playerName: '',
-      gameName: '',
-      date: formatDateForInput(new Date()),
-      amount: 0,
-      currency: 'TL',
-      sponsor: '',
-      description: '',
-      userId: '',
-      status: 'pending',
-      timestamp: Date.now(),
-      imageUrl: '',
+      userId: currentSubmission.userId || "",
+      userName: currentSubmission.userName || "",
+      gameName: currentSubmission.gameName || "",
+      bet: Number(currentSubmission.bet) || 0,
+      winAmount: Number(currentSubmission.winAmount) || 0,
+      sponsor: currentSubmission.sponsor || "",
+      date: currentSubmission.date || new Date().toISOString().split('T')[0],
+      timestamp: createTimestamp(),
+      imageUrl: currentSubmission.imageUrl || "",
+      link: currentSubmission.link || "",
+    };
+
+    // Add the new submission to the database
+    addSubmission(newSubmission)
+      .then(() => {
+        // Update the local state
+        setSubmissions(prev => [newSubmission, ...prev]);
+        setFilteredSubmissions(prev => [newSubmission, ...prev]);
+        
+        // Close the modal and reset the form
+        setIsModalOpen(false);
+        // Reset with only valid properties
+        setCurrentSubmission({
+          userId: "",
+          userName: "",
+          gameName: "",
+          bet: 0,
+          winAmount: 0,
+          sponsor: "",
+          date: new Date().toISOString().split('T')[0],
+          imageUrl: "",
+          link: "",
+        });
+      })
+      .catch((error) => {
+        console.error("Error adding submission:", error);
+        alert("Kazanç eklenirken bir hata oluştu.");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  };
+
+  // Create a helper function to open the modal with proper initialization
+  const openAddModal = () => {
+    // Explicitly set only valid properties
+    setCurrentSubmission({
+      userId: "",
+      userName: "",
+      gameName: "",
+      bet: 0,
+      winAmount: 0,
+      sponsor: "",
+      date: new Date().toISOString().split('T')[0],
+      imageUrl: "",
+      link: "",
     });
+    setModalMode('add');
     setIsModalOpen(true);
+  };
+
+  // Create a function to handle the form submission
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (modalMode === 'add') {
+      handleAddSubmission(e);
+    }
   };
 
   if (!user) {
@@ -272,17 +366,25 @@ export default function AdminWinSubmissionsPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Kullanıcı Kazançları Yönetimi</h1>
-            <button 
-              onClick={refreshData}
-              className="ml-auto p-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-5 h-5" />
-              )}
-            </button>
+            <div className="ml-auto flex space-x-2">
+              <button
+                onClick={openAddModal}
+                className="p-2 bg-green-600 rounded hover:bg-green-700 transition-colors flex items-center"
+              >
+                <span className="text-lg mr-1">+</span> Ekle
+              </button>
+              <button 
+                onClick={refreshData}
+                className="p-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
           
           {/* Filters */}
@@ -609,10 +711,159 @@ export default function AdminWinSubmissionsPage() {
             </div>
           </div>
         </div>
+        
+        {/* Add/Edit Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-lg w-full max-w-md p-6">
+              <h2 className="text-xl font-bold mb-4">
+                {modalMode === 'add' ? 'Yeni Kazanç Ekle' : 'Kazancı Düzenle'}
+              </h2>
+              
+              <form onSubmit={handleFormSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Kullanıcı Adı</label>
+                    <input
+                      type="text"
+                      value={currentSubmission.userName || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, userName: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Kullanıcı ID</label>
+                    <input
+                      type="text"
+                      value={currentSubmission.userId || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, userId: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Oyun Adı</label>
+                    <input
+                      type="text"
+                      value={currentSubmission.gameName || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, gameName: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">Bahis (₺)</label>
+                      <input
+                        type="number"
+                        value={currentSubmission.bet || 0}
+                        onChange={(e) => setCurrentSubmission({...currentSubmission, bet: Number(e.target.value)})}
+                        className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1">Kazanç (₺)</label>
+                      <input
+                        type="number"
+                        value={currentSubmission.winAmount || 0}
+                        onChange={(e) => setCurrentSubmission({...currentSubmission, winAmount: Number(e.target.value)})}
+                        className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                        min="0"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Sponsor</label>
+                    <input
+                      type="text"
+                      value={currentSubmission.sponsor || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, sponsor: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Tarih</label>
+                    <input
+                      type="date"
+                      value={currentSubmission.date || new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, date: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Görsel URL (isteğe bağlı)</label>
+                    <input
+                      type="url"
+                      value={currentSubmission.imageUrl || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, imageUrl: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Link (isteğe bağlı)</label>
+                    <input
+                      type="url"
+                      value={currentSubmission.link || ''}
+                      onChange={(e) => setCurrentSubmission({...currentSubmission, link: e.target.value})}
+                      className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end mt-6 space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Kaydediliyor...
+                      </>
+                    ) : (
+                      'Kaydet'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+const formatDisplayDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 const SubmissionDetails = ({ submission }: { submission: WinSubmission }) => {
   return (
@@ -620,17 +871,28 @@ const SubmissionDetails = ({ submission }: { submission: WinSubmission }) => {
       <h3 className="text-xl font-semibold mb-3">Kazanç Detayları</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <p><span className="font-semibold">Oyuncu:</span> {submission.playerName}</p>
+          <p><span className="font-semibold">Kullanıcı Adı:</span> {submission.userName}</p>
           <p><span className="font-semibold">Oyun:</span> {submission.gameName}</p>
-          <p><span className="font-semibold">Tarih:</span> {formatDate(submission.date)}</p>
+          <p><span className="font-semibold">Tarih:</span> {formatDisplayDate(submission.date)}</p>
           <p><span className="font-semibold">Sponsor:</span> {submission.sponsor}</p>
-          <p><span className="font-semibold">Tutar:</span> {submission.amount} {submission.currency}</p>
+          <p><span className="font-semibold">Bahis:</span> {submission.bet.toLocaleString()} ₺</p>
+          <p><span className="font-semibold">Kazanç:</span> {submission.winAmount.toLocaleString()} ₺</p>
           <p><span className="font-semibold">Kullanıcı ID:</span> {submission.userId}</p>
-          <p><span className="font-semibold">Durum:</span> {getStatusLabel(submission.status)}</p>
         </div>
         <div>
-          <p><span className="font-semibold">Açıklama:</span></p>
-          <p className="break-words">{submission.description}</p>
+          {submission.link && (
+            <p>
+              <span className="font-semibold">Link:</span>{' '}
+              <a 
+                href={submission.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {submission.link}
+              </a>
+            </p>
+          )}
           
           {submission.imageUrl && (
             <div className="mt-4">
