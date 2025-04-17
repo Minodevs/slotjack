@@ -34,6 +34,12 @@ interface TicketType {
   saleEnds: number;
 }
 
+// Utility function to format date for input fields
+const formatDateForInput = (timestamp: number) => {
+  const date = new Date(timestamp);
+  return date.toISOString().split('T')[0];
+};
+
 // Sample tickets for demonstration
 const demoTickets = [
   { 
@@ -264,20 +270,13 @@ export default function AdminTicketsPage() {
   
   // Format date for display
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('tr-TR', {
+    return new Date(timestamp).toLocaleDateString('tr-TR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-  
-  // Format date for input field
-  export const formatDateForInput = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toISOString().split('T')[0];
   };
   
   // Open modal for adding new ticket
