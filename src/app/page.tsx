@@ -10,62 +10,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useSiteSettings } from '@/components/SiteSettingsProvider';
-
-// User Rank enumeration 
-export enum UserRank {
-  ADMIN = 'admin',
-  VIP = 'vip',
-  NORMAL = 'normal'
-}
-
-// User interface definition
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  jackPoints: number;
-  transactions: Transaction[];
-  lastUpdated: number;
-  hasReceivedInitialBonus: boolean;
-  rank: UserRank; // Added rank field
-  lastDailyBonus?: number; // Add this field for daily bonus tracking
-}
-
-// Define Transaction type
-interface Transaction {
-  id: string;
-  amount: number;
-  description: string;
-  timestamp: number;
-  type: string;
-}
-
-// Define other types used in the component state/props if necessary
-interface Player {
-  id: number;
-  name: string;
-  points: number;
-  avatar: string;
-}
-
-interface Tournament {
-  id: number;
-  name: string;
-  date: string;
-  prizePool: number;
-  entryFee: number;
-  participants: number;
-  isVipOnly?: boolean;
-}
-
-// Social platform interface for rendering social media buttons
-interface SocialPlatform {
-  id: number;
-  name: string;
-  icon: string;
-  color: string;
-  link: string;
-}
+import { UserRank, User, Transaction, Player, Tournament, SocialPlatform, RedemptionCode, isUser } from '@/types/user';
 
 // Mock data remains the same
 const topPlayers: Player[] = [
@@ -172,30 +117,6 @@ interface FloatingCoinProps {
   amount: number;
   isVisible: boolean;
   onAnimationEnd: () => void;
-}
-
-// Type guard function to verify User type
-function isUser(obj: any): obj is User {
-  return obj && typeof obj === 'object' 
-    && 'id' in obj
-    && 'email' in obj
-    && 'jackPoints' in obj
-    && 'transactions' in obj
-    && 'lastUpdated' in obj
-    && 'hasReceivedInitialBonus' in obj
-    && 'rank' in obj;
-}
-
-// Define redemption code interface
-interface RedemptionCode {
-  id: string;
-  code: string;
-  pointValue: number;
-  isUsed: boolean;
-  createdAt: number;
-  usedAt?: number;
-  usedBy?: string;
-  description?: string;
 }
 
 export default function HomePage() {
