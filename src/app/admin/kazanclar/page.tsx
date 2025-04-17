@@ -304,8 +304,8 @@ export default function AdminWinSubmissionsPage() {
     setIsSubmitting(true);
 
     // Create a new submission with the correct properties
-    const newSubmission: WinSubmission = {
-      id: uuidv4(),
+    // Using type Omit<WinSubmission, 'id' | 'timestamp'> to match the addSubmission parameter type
+    const submissionData: Omit<WinSubmission, 'id' | 'timestamp'> = {
       userId: currentSubmission.userId || "",
       userName: currentSubmission.userName || "",
       gameName: currentSubmission.gameName || "",
@@ -313,14 +313,13 @@ export default function AdminWinSubmissionsPage() {
       winAmount: Number(currentSubmission.winAmount) || 0,
       sponsor: currentSubmission.sponsor || "",
       date: currentSubmission.date || new Date().toISOString().split('T')[0],
-      timestamp: createTimestamp(),
       imageUrl: currentSubmission.imageUrl || "",
       link: currentSubmission.link || "",
     };
 
     // Add the new submission to the database
-    addSubmission(newSubmission)
-      .then(() => {
+    addSubmission(submissionData)
+      .then((newSubmission) => {
         // Update the local state
         setSubmissions(prev => [newSubmission, ...prev]);
         setFilteredSubmissions(prev => [newSubmission, ...prev]);
