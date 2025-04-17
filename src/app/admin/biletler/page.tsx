@@ -275,9 +275,9 @@ export default function AdminTicketsPage() {
   };
   
   // Format date for input field
-  const formatDateForInput = (timestamp: number) => {
+  export const formatDateForInput = (timestamp: number) => {
     const date = new Date(timestamp);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    return date.toISOString().split('T')[0];
   };
   
   // Open modal for adding new ticket

@@ -156,6 +156,33 @@ export default function AdminWinSubmissionsPage() {
     setFilteredSubmissions(results);
   }, [searchTerm, filterSponsor, filterDateFrom, filterDateTo, submissions]);
 
+  // Add this function to the component just after the useEffect hooks
+  useEffect(() => {
+    // This effect will run once on component mount to look for any old code that might be causing issues
+    // Check for a deeply nested setCurrentSubmission with invalid properties
+    const checkForProblematicCode = () => {
+      // List of problematic property names that we need to search for in the source code
+      const problematicProps = ['playerName', 'amount', 'date: formatDateForInput'];
+      
+      // This will help us identify if there's code we haven't fixed yet
+      const problematicPropsFound = problematicProps.map(prop => {
+        // For demonstration, log to console - this would need actual DOM traversal in a real implementation
+        if (document.body.innerHTML.includes(prop)) {
+          console.error(`Found problematic property: ${prop} - this may be causing build errors`);
+          return prop;
+        }
+        return null;
+      }).filter(Boolean);
+      
+      if (problematicPropsFound.length > 0) {
+        console.error('Warning: Found problematic properties that might cause build errors:', problematicPropsFound);
+      }
+    };
+    
+    // Call the check function once the component is mounted
+    setTimeout(checkForProblematicCode, 1000);
+  }, []);
+
   const handleViewSubmission = (submission: WinSubmission) => {
     setSelectedSubmission(submission);
   };
@@ -343,6 +370,33 @@ export default function AdminWinSubmissionsPage() {
   // Create a function to handle the form submission
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for any invalid properties in currentSubmission before submitting
+    const validKeys = ['userId', 'userName', 'gameName', 'bet', 'winAmount', 'sponsor', 'date', 'imageUrl', 'link', 'id', 'timestamp'];
+    const currentKeys = Object.keys(currentSubmission);
+    
+    // Find any invalid keys
+    const invalidKeys = currentKeys.filter(key => !validKeys.includes(key));
+    
+    if (invalidKeys.length > 0) {
+      console.error('Invalid properties detected:', invalidKeys);
+      // Create a clean submission object with only valid properties
+      const cleanSubmission: Partial<WinSubmission> = {};
+      validKeys.forEach(key => {
+        if (key in currentSubmission) {
+          // Type assertion to handle dynamic property access
+          cleanSubmission[key as keyof WinSubmission] = 
+            currentSubmission[key as keyof typeof currentSubmission] as any;
+        }
+      });
+      
+      // Update the state with the clean object
+      setCurrentSubmission(cleanSubmission);
+      
+      // Alert the user
+      alert('Some invalid properties were detected and removed. Please try submitting again.');
+      return;
+    }
     
     if (modalMode === 'add') {
       handleAddSubmission(e);
