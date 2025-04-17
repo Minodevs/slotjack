@@ -1,176 +1,282 @@
 'use client';
 
-import { useState } from 'react';
-import { Users, Calendar, Trophy, Filter } from 'lucide-react';
-import PageHeader from '@/components/shared/PageHeader';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { Trophy, Calendar, Users, Clock, Filter } from 'lucide-react';
+import ClientLayout from '@/components/ClientLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
-// Mock data for tournaments
-const tournamentsData = [
+// Mock tournaments data
+const tournamentData = [
   {
     id: 1,
-    title: 'Haftalık Büyük Turnuva',
-    image: 'https://picsum.photos/id/1015/600/400',
-    participants: 128,
-    maxParticipants: 256,
-    prize: '50,000 TL',
-    startDate: '15 Nisan 2025',
-    status: 'active',
-    category: 'all',
+    name: 'Haftalık Mega Turnuva',
+    date: '23 Haziran 2024',
+    time: '20:00',
+    prizePool: 25000,
+    entryFee: 50,
+    participants: {
+      current: 87,
+      max: 128
+    },
+    status: 'upcoming', // upcoming, active, completed
+    isVipOnly: false,
+    description: 'Haftalık büyük turnuvamıza katılın ve büyük ödülleri kazanma şansı yakalayın!'
   },
   {
     id: 2,
-    title: 'Slot Oyunları Şampiyonası',
-    image: 'https://picsum.photos/id/1016/600/400',
-    participants: 64,
-    maxParticipants: 128,
-    prize: '25,000 TL',
-    startDate: '20 Nisan 2025',
+    name: 'VIP Özel Turnuva',
+    date: '25 Haziran 2024',
+    time: '21:00',
+    prizePool: 10000,
+    entryFee: 0,
+    participants: {
+      current: 32,
+      max: 64
+    },
     status: 'upcoming',
-    category: 'slots',
+    isVipOnly: true,
+    description: 'Sadece VIP üyelerimize özel turnuva ile ayrıcalıklı ödüller sizi bekliyor.'
   },
   {
     id: 3,
-    title: 'Poker Turnuvası',
-    image: 'https://picsum.photos/id/1018/600/400',
-    participants: 32,
-    maxParticipants: 64,
-    prize: '30,000 TL',
-    startDate: '25 Nisan 2025',
+    name: 'Aylık Şampiyona',
+    date: '30 Haziran 2024',
+    time: '19:00',
+    prizePool: 50000,
+    entryFee: 100,
+    participants: {
+      current: 156,
+      max: 256
+    },
     status: 'upcoming',
-    category: 'poker',
+    isVipOnly: false,
+    description: 'Ayın en büyük turnuvası! Büyük ödül havuzu ve rekabet sizi bekliyor.'
   },
   {
     id: 4,
-    title: 'Blackjack Yarışması',
-    image: 'https://picsum.photos/id/1019/600/400',
-    participants: 48,
-    maxParticipants: 96,
-    prize: '20,000 TL',
-    startDate: '30 Nisan 2025',
+    name: 'Hızlı Turnuva',
+    date: '20 Haziran 2024',
+    time: '18:00',
+    prizePool: 5000,
+    entryFee: 25,
+    participants: {
+      current: 48,
+      max: 64
+    },
     status: 'upcoming',
-    category: 'blackjack',
+    isVipOnly: false,
+    description: 'Hızlı tempolu turnuva ile kısa sürede büyük kazançlar elde edin.'
   },
   {
     id: 5,
-    title: 'Roulette Ustaları',
-    image: 'https://picsum.photos/id/1020/600/400',
-    participants: 24,
-    maxParticipants: 48,
-    prize: '15,000 TL',
-    startDate: '5 Mayıs 2025',
+    name: 'Düşük Giriş Ücretli Turnuva',
+    date: '22 Haziran 2024',
+    time: '17:00',
+    prizePool: 3000,
+    entryFee: 10,
+    participants: {
+      current: 78,
+      max: 128
+    },
     status: 'upcoming',
-    category: 'roulette',
+    isVipOnly: false,
+    description: 'Düşük giriş ücreti, yüksek ödül havuzu! Herkes için uygun turnuva.'
   },
   {
     id: 6,
-    title: 'Baccarat Turnuvası',
-    image: 'https://picsum.photos/id/1021/600/400',
-    participants: 16,
-    maxParticipants: 32,
-    prize: '10,000 TL',
-    startDate: '10 Mayıs 2025',
-    status: 'upcoming',
-    category: 'baccarat',
+    name: 'Geçmiş Turnuva',
+    date: '15 Haziran 2024',
+    time: '20:00',
+    prizePool: 15000,
+    entryFee: 50,
+    participants: {
+      current: 128,
+      max: 128
+    },
+    status: 'completed',
+    isVipOnly: false,
+    winner: 'emre_85',
+    description: 'Tamamlanmış turnuva örneği.'
   },
 ];
 
-// Filter options
-const filterOptions = [
-  { id: 'all', name: 'Tümü' },
-  { id: 'slots', name: 'Slot Oyunları' },
-  { id: 'poker', name: 'Poker' },
-  { id: 'blackjack', name: 'Blackjack' },
-  { id: 'roulette', name: 'Roulette' },
-  { id: 'baccarat', name: 'Baccarat' },
-];
+type TournamentFilter = 'all' | 'upcoming' | 'active' | 'completed' | 'vip';
 
 export default function TournamentsPage() {
-  const [selectedFilter, setSelectedFilter] = useState('all');
-
-  // Filter tournaments based on selected category
-  const filteredTournaments = tournamentsData.filter(
-    (tournament) => selectedFilter === 'all' || tournament.category === selectedFilter
-  );
-
-  return (
-    <div className="max-w-[1440px] mx-auto">
-      <PageHeader 
-        title="Turnuvalar" 
-        description="En heyecan verici turnuvalara katılın ve ödüller kazanın" 
-        icon={Users} 
-      />
-
-      {/* Filter options */}
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
-          <Filter className="w-5 h-5 mr-2 text-gray-400" />
-          <h2 className="text-lg font-semibold">Filtrele</h2>
+  const { loading } = useAuth();
+  const [filter, setFilter] = useState<TournamentFilter>('all');
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Filter tournaments based on selected filter
+  const filteredTournaments = tournamentData.filter(tournament => {
+    if (filter === 'all') return true;
+    if (filter === 'upcoming') return tournament.status === 'upcoming';
+    if (filter === 'active') return tournament.status === 'active';
+    if (filter === 'completed') return tournament.status === 'completed';
+    if (filter === 'vip') return tournament.isVipOnly;
+    return true;
+  });
+  
+  // Handle loading state
+  if (loading || !isMounted) {
+    return (
+      <ClientLayout>
+        <div className="container mx-auto px-4 flex justify-center items-center min-h-[500px]">
+          <div className="text-center">
+            <div className="inline-block w-10 h-10 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-lg">Yükleniyor...</p>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {filterOptions.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => setSelectedFilter(option.id)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedFilter === option.id
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'bg-[#1E1E1E] text-gray-300 hover:bg-[#2A2A2A]'
-              }`}
-            >
-              {option.name}
-            </button>
+      </ClientLayout>
+    );
+  }
+  
+  return (
+    <ClientLayout>
+      <div className="container mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold flex items-center">
+            <Trophy className="w-8 h-8 text-[#FF6B00] mr-2" />
+            Turnuvalar
+          </h1>
+        </div>
+        
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              filter === 'all'
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Tümü
+          </button>
+          <button
+            onClick={() => setFilter('upcoming')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              filter === 'upcoming'
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Yaklaşan
+          </button>
+          <button
+            onClick={() => setFilter('active')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              filter === 'active'
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            Aktif
+          </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              filter === 'completed'
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            Tamamlandı
+          </button>
+          <button
+            onClick={() => setFilter('vip')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+              filter === 'vip'
+                ? 'bg-[#FF6B00] text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <span className="w-4 h-4 flex items-center justify-center mr-2 text-xs font-bold">VIP</span>
+            VIP Özel
+          </button>
+        </div>
+        
+        {/* Tournaments grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTournaments.map(tournament => (
+            <div key={tournament.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors">
+              <div className="p-6 border-b border-gray-700 relative">
+                {tournament.isVipOnly && (
+                  <div className="absolute top-4 right-4">
+                    <span className="px-2 py-1 bg-purple-900/60 text-purple-300 text-xs rounded-full">
+                      VIP
+                    </span>
+                  </div>
+                )}
+                <h2 className="text-xl font-semibold mb-2 pr-16">{tournament.name}</h2>
+                <p className="text-gray-400 text-sm mb-4">{tournament.description}</p>
+                <div className="flex flex-wrap gap-y-2">
+                  <div className="w-1/2 flex items-center text-sm">
+                    <Calendar className="w-4 h-4 text-[#FF6B00] mr-2" />
+                    <span>{tournament.date}</span>
+                  </div>
+                  <div className="w-1/2 flex items-center text-sm">
+                    <Clock className="w-4 h-4 text-[#FF6B00] mr-2" />
+                    <span>{tournament.time}</span>
+                  </div>
+                  <div className="w-1/2 flex items-center text-sm">
+                    <Users className="w-4 h-4 text-[#FF6B00] mr-2" />
+                    <span>{tournament.participants.current}/{tournament.participants.max}</span>
+                  </div>
+                  <div className="w-1/2 flex items-center text-sm">
+                    <Trophy className="w-4 h-4 text-[#FF6B00] mr-2" />
+                    <span>{tournament.prizePool.toLocaleString()} JP</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-gray-400">Giriş Ücreti</div>
+                  <div className="font-semibold">
+                    {tournament.entryFee > 0 ? `${tournament.entryFee} JP` : 'Ücretsiz'}
+                  </div>
+                </div>
+                {tournament.status === 'completed' ? (
+                  <div className="text-right">
+                    <div className="text-xs text-gray-400">Kazanan</div>
+                    <div className="font-semibold text-green-400">{tournament.winner}</div>
+                  </div>
+                ) : (
+                  <button 
+                    className={`px-4 py-2 rounded-lg ${
+                      tournament.status === 'upcoming' 
+                        ? 'bg-[#FF6B00] hover:bg-[#FF8533] text-white'
+                        : tournament.status === 'active'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    } transition-colors`}
+                    disabled={tournament.status === 'completed'}
+                  >
+                    {tournament.status === 'upcoming' ? 'Katıl' : tournament.status === 'active' ? 'İzle' : 'Tamamlandı'}
+                  </button>
+                )}
+              </div>
+            </div>
           ))}
         </div>
-      </div>
-
-      {/* Tournaments grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTournaments.map((tournament) => (
-          <div 
-            key={tournament.id} 
-            className="bg-[#1E1E1E] rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <div className="relative h-48">
-              <Image
-                src={tournament.image}
-                alt={tournament.title}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute top-4 right-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  tournament.status === 'active' 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-blue-500 text-white'
-                }`}>
-                  {tournament.status === 'active' ? 'Aktif' : 'Yakında'}
-                </span>
-              </div>
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">{tournament.title}</h3>
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center text-gray-400">
-                  <Users className="w-5 h-5 mr-2" />
-                  <span>{tournament.participants} / {tournament.maxParticipants} Katılımcı</span>
-                </div>
-                <div className="flex items-center text-gray-400">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  <span>Başlangıç: {tournament.startDate}</span>
-                </div>
-                <div className="flex items-center text-gray-400">
-                  <Trophy className="w-5 h-5 mr-2" />
-                  <span>Ödül: {tournament.prize}</span>
-                </div>
-              </div>
-              <button className="w-full bg-[#FF6B00] hover:bg-[#FF8533] text-white py-2 rounded-lg font-medium transition-colors">
-                Katıl
-              </button>
-            </div>
+        
+        {filteredTournaments.length === 0 && (
+          <div className="bg-gray-800 p-8 rounded-lg text-center">
+            <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">Turnuva bulunamadı</h3>
+            <p className="text-gray-500">Seçilen filtreye uygun turnuva bulunmamaktadır.</p>
           </div>
-        ))}
+        )}
       </div>
-    </div>
+    </ClientLayout>
   );
 } 

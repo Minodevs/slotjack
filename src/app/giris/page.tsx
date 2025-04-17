@@ -1,93 +1,188 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { LogIn } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import ClientLayout from '../../components/ClientLayout';
+import { AlertTriangle } from 'lucide-react';
 
 export default function LoginPage() {
+  const { signIn, error: authError, user } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { signIn } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isResettingState, setIsResettingState] = useState(false);
+  const searchParams = useSearchParams();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle recovery from stuck state
+  useEffect(() => {
+    let loadingTimeout: NodeJS.Timeout;
+
+    // If loading takes too long, offer a reset option
+    if (loading) {
+      loadingTimeout = setTimeout(() => {
+        setError('Yükleme uzun sürdü. Oturum durumunuzu sıfırlamak isteyebilirsiniz.');
+        setIsResettingState(true);
+      }, 5000);
+    }
+
+    return () => {
+      clearTimeout(loadingTimeout);
+    };
+  }, [loading]);
+
+  // Handle URL params and redirects
+  useEffect(() => {
+    // If user is logged in, redirect to home
+    if (user) {
+      router.push('/');
+      return;
+    }
+
+    // Check URL parameters
+    if (searchParams?.get('emailExists') === 'true') {
+      setSuccessMessage('Bu e-posta zaten kayıtlı. Lütfen giriş yapın.');
+    } else if (searchParams?.get('logout') === 'true') {
+      setSuccessMessage('Başarıyla çıkış yaptınız.');
+    } else if (searchParams?.get('error') === 'true') {
+      setError('Bir hata oluştu. Lütfen tekrar giriş yapmayı deneyin.');
+    } else if (searchParams?.get('reset') === 'true') {
+      setSuccessMessage('Uygulama durumu sıfırlandı. Lütfen tekrar giriş yapın.');
+    }
+  }, [searchParams, user, router]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
-      router.push('/');
-    } catch (error: any) {
-      setError(error.message || 'Giriş yapılırken bir hata oluştu');
+      await signIn(email, password);
+      router.push('/'); // Redirect to home page after successful login
+    } catch (err: any) {
+      setError(err.toString());
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResetState = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear all cookies
+    document.cookie.split(';').forEach(c => {
+      document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    });
+    
+    // Reload the page with reset param
+    window.location.href = '/giris?reset=true';
+  };
+
   return (
-    <div className="max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <LogIn className="w-12 h-12 text-[#FF6B00] mx-auto mb-4" />
-        <h1 className="text-3xl font-bold">Giriş Yap</h1>
-        <p className="text-gray-400 mt-2">SLOTJACK hesabınıza giriş yapın</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2">
-            E-posta
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] outline-none transition-colors"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-2">
-            Şifre
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] outline-none transition-colors"
-            required
-          />
-        </div>
-
-        {error && (
-          <div className="p-3 rounded-lg bg-red-900/50 border border-red-800 text-red-200 text-sm">
-            {error}
+    <ClientLayout>
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
+        <div className="w-full max-w-md p-8 space-y-4 bg-gray-900 rounded-xl shadow-lg border border-gray-800">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold">Giriş Yap</h1>
+            <p className="text-gray-400 mt-1">SLOTJACK hesabınıza giriş yapın</p>
           </div>
-        )}
+          
+          {successMessage && (
+            <div className="p-4 rounded-lg bg-green-900/50 border border-green-800 text-green-200 text-sm">
+              {successMessage}
+            </div>
+          )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 px-4 bg-[#FF6B00] hover:bg-[#FF8533] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-        </button>
+          {isResettingState && (
+            <div className="p-4 rounded-lg bg-yellow-900/50 border border-yellow-800 text-yellow-200 text-sm">
+              <p>Giriş yaparken bir sorun mu yaşıyorsunuz?</p>
+              <button 
+                onClick={handleResetState}
+                className="mt-2 w-full py-2 px-4 bg-yellow-700 hover:bg-yellow-600 text-white text-sm rounded transition-colors"
+              >
+                Oturum Durumunu Sıfırla
+              </button>
+            </div>
+          )}
 
-        <div className="text-center text-sm">
-          <span className="text-gray-400">Hesabınız yok mu? </span>
-          <Link href="/kayit" className="text-[#FF6B00] hover:underline">
-            Hemen kaydolun
-          </Link>
+          {(error || authError) && (
+            <div className="p-4 mb-4 text-sm text-red-400 bg-red-900/30 rounded-lg" role="alert">
+              {error || authError}
+            </div>
+          )}
+
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                E-posta
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                placeholder="E-posta adresiniz"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                Şifre
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Şifreniz"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <Link
+                  href="/sifremi-unuttum"
+                  className="font-medium text-orange-500 hover:text-orange-400"
+                >
+                  Şifremi unuttum
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              </button>
+            </div>
+          </form>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-400">
+              Hesabınız yok mu?{' '}
+              <Link href="/kayit" className="font-medium text-orange-500 hover:text-orange-400">
+                Hemen kaydolun
+              </Link>
+            </p>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </ClientLayout>
   );
 } 

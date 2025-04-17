@@ -14,6 +14,9 @@ module.exports = {
         foreground: '#FFFFFF',
         accent: '#FFD700',
       },
+      animation: {
+        'spin-slow': 'spin 6s linear infinite',
+      },
     },
   },
   plugins: [],

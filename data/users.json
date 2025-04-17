@@ -1,0 +1,44 @@
+{
+  "testtest@gmail.com": {
+    "id": "c43b0731-8c66-45de-83de-28d4dee070dc",
+    "email": "testtest@gmail.com",
+    "password": "SEZER123X",
+    "name": "dungeon",
+    "rank": "normal",
+    "isVerified": false,
+    "jackPoints": 500,
+    "hasReceivedInitialBonus": true,
+    "transactions": [
+      {
+        "id": "b635d00c-855f-4973-aa6d-b1d4e9624b81",
+        "amount": 500,
+        "description": "Hoş Geldin Bonusu! Tebrikler, siteye kayıt olduğunuz için bonus JackPoints kazandınız.",
+        "timestamp": 1744807586378,
+        "type": "bonus"
+      }
+    ],
+    "createdAt": 1744807586378,
+    "lastLogin": 1744807593194
+  },
+  "sezarpaypals2@gmail.com": {
+    "id": "c50708bc-9a58-44a5-9321-22c7112127cc",
+    "email": "sezarpaypals2@gmail.com",
+    "password": "sezer123x",
+    "name": "adminwebsite",
+    "rank": "admin",
+    "isVerified": false,
+    "jackPoints": 500,
+    "hasReceivedInitialBonus": true,
+    "transactions": [
+      {
+        "id": "a1746713-0554-4047-a78d-c30be3114fdf",
+        "amount": 500,
+        "description": "Hoş Geldin Bonusu! Tebrikler, siteye kayıt olduğunuz için bonus JackPoints kazandınız.",
+        "timestamp": 1744807664376,
+        "type": "bonus"
+      }
+    ],
+    "createdAt": 1744807664376,
+    "lastLogin": 1744807677961
+  }
+}
