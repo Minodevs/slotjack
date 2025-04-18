@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,50 +8,33 @@ import { UserRank } from '@/types/user';
 import { 
   ChevronLeft, Filter, Search, ArrowUp, ArrowDown, 
   Download, Coins, CreditCard, Calendar, User, Trash, RefreshCw,
-  Phone, Send as TelegramIcon, MessageCircle as DiscordIcon, Eye
+  Phone, Send as TelegramIcon, MessageCircle as DiscordIcon, Eye, ExternalLink
 } from 'lucide-react';
 import ClientLayout from '../../../components/ClientLayout';
 import { format } from 'date-fns';
+import * as TransactionsService from '@/services/TransactionsService';
+import { Transaction } from '@/types/transactions';
+import { migrateTransactionsToSupabase } from '@/scripts/migrateTransactions';
+import toast from 'react-hot-toast';
 
 // Constants
 const TRANSACTION_TYPES = ['All', 'DEPOSIT', 'WITHDRAWAL', 'BONUS', 'REFUND', 'FEE'];
 const LEADERBOARD_STORAGE_KEY = 'slotjack_leaderboard';
-
-// Transaction type from AuthContext
-interface Transaction {
-  id: string;
-  amount: number;
-  description: string;
-  timestamp: number;
-  type: 'earn' | 'spend' | 'bonus' | 'event' | 'admin';
-}
-
-// Extended transaction with user info
-interface TransactionWithUser extends Transaction {
-  userEmail: string;
-  userName?: string;
-  userPhone?: string;
-  userSocialMedia?: {
-    telegram?: string;
-    discord?: string;
-    instagram?: string;
-    twitter?: string;
-    facebook?: string;
-  };
-}
 
 export default function AdminTransactionsPage() {
   const router = useRouter();
   const authContext = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [transactions, setTransactions] = useState<TransactionWithUser[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<TransactionWithUser[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'earn' | 'spend'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  
+  const [isLoading, setIsLoading] = useState(false);
   
   if (!authContext) {
     throw new Error('AuthContext is undefined');
@@ -71,90 +54,59 @@ export default function AdminTransactionsPage() {
     }
   }, [user, loading, router]);
 
-  // Function to load transactions from localStorage
-  const loadTransactions = () => {
+  // Function to load transactions from Supabase
+  const loadTransactions = async () => {
     setRefreshing(true);
     
     try {
-      // Collect transactions from all users in the leaderboard
-      const allTransactions: TransactionWithUser[] = [];
+      console.log('Loading transactions from database...');
+      // Fetch transactions from Supabase via our service
+      const allTransactions = await TransactionsService.getAllTransactions();
       
-      // Get the latest leaderboard data from localStorage
-      const leaderboardData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-      if (!leaderboardData) {
-        setTransactions([]);
-        setFilteredTransactions([]);
-        setLoading(false);
-        setRefreshing(false);
-        return;
+      if (allTransactions.length === 0) {
+        console.log('No transactions found in the database');
+        toast.success('No transactions found in the database');
+      } else {
+        console.log(`Loaded ${allTransactions.length} transactions successfully`);
+        toast.success(`Loaded ${allTransactions.length} transactions`);
       }
-      
-      const parsedLeaderboard = JSON.parse(leaderboardData);
-      
-      // Get registered users to ensure we have the most up-to-date phone numbers
-      const registeredUsersStr = localStorage.getItem('slotjack_registered_users');
-      const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : {};
-      
-      parsedLeaderboard.forEach((boardUser: any) => {
-        if (boardUser.transactions && Array.isArray(boardUser.transactions)) {
-          // Get the latest user data including phone number
-          const userEmail = boardUser.email;
-          const userData = registeredUsers[userEmail] || {};
-          const phoneNumber = userData.phoneNumber || boardUser.phoneNumber || boardUser.phone || '';
-          
-          // Get social verification info
-          const socialVerifications = userData.socialVerifications || boardUser.socialVerifications || {};
-          
-          boardUser.transactions.forEach((tx: Transaction) => {
-            allTransactions.push({
-              ...tx,
-              userEmail: boardUser.email,
-              userName: boardUser.name,
-              userPhone: phoneNumber,
-              userSocialMedia: {
-                telegram: socialVerifications?.telegram?.username,
-                discord: socialVerifications?.discord?.username,
-                instagram: socialVerifications?.instagram?.username,
-                twitter: socialVerifications?.twitter?.username,
-                facebook: socialVerifications?.facebook?.username,
-              }
-            });
-          });
-        }
-      });
-      
-      // Sort by newest first
-      allTransactions.sort((a, b) => b.timestamp - a.timestamp);
       
       setTransactions(allTransactions);
       setFilteredTransactions(allTransactions);
     } catch (error) {
       console.error('Error loading transactions:', error);
+      toast.error(`Failed to load transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Try to load from local cache as fallback
+      try {
+        const cachedTransactions = JSON.parse(localStorage.getItem('slotjack_transactions_cache') || '[]');
+        if (cachedTransactions.length > 0) {
+          setTransactions(cachedTransactions);
+          setFilteredTransactions(cachedTransactions);
+          toast.success(`Loaded ${cachedTransactions.length} transactions from cache`);
+        }
+      } catch (cacheError) {
+        console.error('Error loading from cache:', cacheError);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
   
-  // Listen for storage events to update transactions when changes happen elsewhere
+  // Set up periodic refresh
   useEffect(() => {
-    // Handle storage events from other tabs/windows
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === LEADERBOARD_STORAGE_KEY || event.key === 'slotjack_registered_users') {
+    // Set up an interval to refresh data periodically
+    const refreshInterval = setInterval(() => {
+      if (!refreshing) {
         loadTransactions();
       }
-    };
-    
-    // Also set up an interval to refresh data periodically
-    const refreshInterval = setInterval(loadTransactions, 30000); // Refresh every 30 seconds
-    
-    window.addEventListener('storage', handleStorageChange);
+    }, 30000); // Refresh every 30 seconds
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, [refreshing]);
   
   // Function to manually refresh transactions
   const refreshTransactions = () => {
@@ -264,6 +216,27 @@ export default function AdminTransactionsPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleMigrateTransactions = async () => {
+    if (confirm('This will migrate all transactions from localStorage to the Supabase database. Continue?')) {
+      try {
+        setIsLoading(true);
+        const result = await migrateTransactionsToSupabase();
+        setIsLoading(false);
+        
+        if (result && result.success > 0) {
+          toast.success(`Successfully migrated ${result.success} transactions. Failed: ${result.error}`);
+          loadTransactions(); // Refresh transactions list
+        } else {
+          toast.error('No transactions were migrated. Check console for details.');
+        }
+      } catch (error) {
+        console.error('Migration error:', error);
+        setIsLoading(false);
+        toast.error('Failed to migrate transactions. See console for details.');
+      }
+    }
+  };
   
   if (loading) {
     return (
@@ -292,20 +265,30 @@ export default function AdminTransactionsPage() {
           
           <div className="flex items-center space-x-3">
             <button
-              onClick={refreshTransactions}
-              className={`px-3 py-2 bg-blue-600 text-white rounded-md flex items-center ${refreshing ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-              disabled={refreshing}
+              onClick={refreshTransactions} 
+              className="px-3 py-2 bg-blue-600 text-white rounded-md flex items-center disabled:opacity-50"
+              disabled={isLoading}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Yenileniyor...' : 'Yenile'}
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
             </button>
             
             <button
-              onClick={exportCSV}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+              onClick={exportCSV} 
+              className="px-3 py-2 bg-blue-600 text-white rounded-md flex items-center disabled:opacity-50"
+              disabled={isLoading}
             >
               <Download className="w-4 h-4 mr-2" />
-              CSV İndir
+              Export CSV
+            </button>
+
+            <button
+              onClick={handleMigrateTransactions} 
+              className="px-3 py-2 bg-purple-600 text-white rounded-md flex items-center disabled:opacity-50"
+              disabled={isLoading}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Migrate from Local
             </button>
           </div>
         </div>
@@ -337,6 +320,9 @@ export default function AdminTransactionsPage() {
                 <option value="all">Tümü</option>
                 <option value="earn">Kazanılan</option>
                 <option value="spend">Harcanan</option>
+                <option value="bonus">Bonus</option>
+                <option value="event">Etkinlik</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
             
@@ -463,38 +449,91 @@ export default function AdminTransactionsPage() {
                             </a>
                           )}
                           
-                          <button 
-                            onClick={() => {
-                              // Find the user in the parsedLeaderboard by email
-                              const leaderboardData = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
-                              if (leaderboardData) {
-                                const parsedLeaderboard = JSON.parse(leaderboardData);
-                                const user = parsedLeaderboard.find((user: any) => user.email === tx.userEmail);
-                                if (user && user.id) {
-                                  router.push(`/admin/users/${user.id}`);
+                          {(tx.userId || tx.userEmail) && (
+                            <button 
+                              onClick={() => {
+                                // Get the user from localStorage to ensure we're using the correct format
+                                try {
+                                  const registeredUsersStr = localStorage.getItem('slotjack_registered_users');
+                                  if (registeredUsersStr) {
+                                    const registeredUsers = JSON.parse(registeredUsersStr);
+                                    
+                                    // Check if we can find this user in the registered users
+                                    let foundUserId = null;
+                                    
+                                    Object.entries(registeredUsers).forEach(([email, userData]: [string, any]) => {
+                                      if (
+                                        (tx.userId && userData.id === tx.userId) || 
+                                        (tx.userEmail && email === tx.userEmail)
+                                      ) {
+                                        foundUserId = userData.id;
+                                        console.log('Found user ID:', foundUserId, 'for email:', tx.userEmail);
+                                      }
+                                    });
+                                    
+                                    if (foundUserId) {
+                                      router.push(`/admin/users/${foundUserId}`);
+                                    } else if (tx.userId) {
+                                      // Fallback to using the transaction userId directly
+                                      router.push(`/admin/users/${tx.userId}`);
+                                      console.log('User not found in registered users, using transaction userId directly:', tx.userId);
+                                    } else {
+                                      toast.error(`Kullanıcı bulunamadı: ${tx.userEmail || 'E-posta bilgisi eksik'}`);
+                                      console.error('User not found in registered users:', tx.userEmail);
+                                    }
+                                  } else if (tx.userId) {
+                                    // Fallback if no registered users found
+                                    router.push(`/admin/users/${tx.userId}`);
+                                  } else {
+                                    toast.error(`Kullanıcı verileri yüklenemedi: Kullanıcı kayıtları bulunamadı`);
+                                  }
+                                } catch (error) {
+                                  console.error('Error getting user data:', error);
+                                  // Fallback to direct navigation if we have userId
+                                  if (tx.userId) {
+                                    router.push(`/admin/users/${tx.userId}`);
+                                  } else {
+                                    toast.error(`Kullanıcı bilgilerine erişilemiyor: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+                                  }
                                 }
-                              }
-                            }}
-                            className="px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 mt-1"
-                          >
-                            <Eye className="w-3 h-3 mr-1" /> Profili Gör
-                          </button>
+                              }}
+                              className="px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 mt-1"
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> Profili Gör
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {tx.type === 'earn' ? (
+                        {tx.type === 'earn' && (
                           <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-300">
                             <ArrowUp className="w-3 h-3 mr-1" /> Kazanç
                           </span>
-                        ) : (
+                        )}
+                        {tx.type === 'spend' && (
                           <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-900 text-red-300">
                             <ArrowDown className="w-3 h-3 mr-1" /> Harcama
                           </span>
                         )}
+                        {tx.type === 'bonus' && (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900 text-blue-300">
+                            <ArrowUp className="w-3 h-3 mr-1" /> Bonus
+                          </span>
+                        )}
+                        {tx.type === 'event' && (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-300">
+                            <ArrowUp className="w-3 h-3 mr-1" /> Etkinlik
+                          </span>
+                        )}
+                        {tx.type === 'admin' && (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-300">
+                            <ArrowUp className="w-3 h-3 mr-1" /> Admin
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`font-medium ${tx.type === 'earn' ? 'text-green-400' : 'text-red-400'}`}>
-                          {tx.type === 'earn' ? '+' : '-'}{Math.abs(tx.amount)}
+                        <span className={`font-medium ${tx.type === 'spend' ? 'text-red-400' : 'text-green-400'}`}>
+                          {tx.type === 'spend' ? '-' : '+'}{Math.abs(tx.amount)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-300">
