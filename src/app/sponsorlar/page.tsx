@@ -46,7 +46,7 @@ export default function SponsorsPage() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[500px]">
+        <div className="w-full flex items-center justify-center min-h-[500px]">
           <div className="text-center">
             <div className="inline-block w-10 h-10 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-lg">Yükleniyor...</p>
@@ -58,10 +58,10 @@ export default function SponsorsPage() {
   
   return (
     <ClientLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold flex items-center">
-            <Gift className="w-8 h-8 text-[#FF6B00] mr-2" />
+      <div className="w-full px-2 py-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold flex items-center">
+            <Gift className="w-7 h-7 text-[#FF6B00] mr-2" />
             SLOTJACK İN TERCİHİ
           </h1>
         </div>
@@ -69,7 +69,7 @@ export default function SponsorsPage() {
         {/* Featured Sponsors Section */}
         {featuredSponsors.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-6">VIP Siteler</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Vip Siteler</h2>
             <VIPSiteGrid>
               {featuredSponsors.map(sponsor => (
                 <VIPSiteCard
@@ -90,33 +90,21 @@ export default function SponsorsPage() {
         {/* Regular Sponsors Section */}
         {regularSponsors.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold text-white mb-6">Önerilen Siteler</h2>
-            <GridCardContainer>
+            <h2 className="text-xl font-semibold text-white mb-4">Önerilen Siteler</h2>
+            <VIPSiteGrid>
               {regularSponsors.map(sponsor => (
-                <GridCard key={sponsor.id}>
-                  <GridCardImage 
-                    src={sponsor.logo} 
-                    alt={sponsor.name} 
-                  />
-                  <GridCardContent>
-                    <div className="text-center mb-4">
-                      <p className="text-[#FF6B00] font-bold text-md">{sponsor.bonuses[0].text}</p>
-                      <p className="text-gray-300 text-xs">{sponsor.bonuses[1].text}</p>
-                    </div>
-                  </GridCardContent>
-                  <GridCardFooter>
-                    <a 
-                      href={sponsor.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="bg-[#FF6B00] hover:bg-[#E05A00] text-white text-xs font-medium py-2 rounded w-full text-center block"
-                    >
-                      {sponsor.buttonText}
-                    </a>
-                  </GridCardFooter>
-                </GridCard>
+                <VIPSiteCard
+                  key={sponsor.id}
+                  logo={sponsor.logo}
+                  name={sponsor.name}
+                  primaryBonus={sponsor.bonuses[0].text}
+                  secondaryBonus={sponsor.bonuses[1].text}
+                  tags={sponsor.tags}
+                  buttonText={sponsor.buttonText}
+                  buttonLink={sponsor.website}
+                />
               ))}
-            </GridCardContainer>
+            </VIPSiteGrid>
           </div>
         )}
         
