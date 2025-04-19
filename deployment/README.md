@@ -1,30 +1,34 @@
-# Slotjack Deployment
+# SlotJack Deployment Package
 
-This directory contains the production build for the Slotjack application.
+This package contains a standalone Next.js application ready for deployment.
 
 ## Deployment Instructions
 
-1. Install dependencies:
-```bash
-npm install --production
+1. Copy all contents of this folder to your server
+2. Make sure Node.js 18.17.0 or later is installed
+3. Run the following command to start the server:
+
+```
+node server.js
 ```
 
-2. Start the production server:
-```bash
-npm start
+By default, the server will run on port 3000. You can change this by setting the PORT environment variable:
+
 ```
+PORT=8080 node server.js
+```
+
+## Files and Directories
+
+- `server.js` - The Node.js server that runs your application
+- `.next/` - Contains application assets and server files
+- `public/` - Contains static files like images and fonts
+- `node_modules/` - Contains minimal dependencies required to run the server
 
 ## Environment Variables
 
-Make sure the following environment variables are properly configured:
-- DATABASE_URL: Supabase connection URL
-- SUPABASE_URL: Supabase project URL
-- SUPABASE_KEY: Supabase project API key
-- NEXT_PUBLIC_SUPABASE_URL: Publicly accessible Supabase URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY: Public anon key for Supabase
+If you need to set environment variables, you can create a `.env` file in the root directory or set them in your hosting environment.
 
-## Notes
+## Mobile Optimizations
 
-- The application is built with Next.js 14.1.0
-- The production build uses server-side rendering for dynamic routes and static generation for static routes
-- The slug name conflict between `[id]` and `[userId]` has been resolved
+This build includes mobile responsive views that adapt to various screen sizes.

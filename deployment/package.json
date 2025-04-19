@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "make-admin": "node src/scripts/makeAdmin.js",
+    "deploy-package": "node deploy.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.1.0",
@@ -42,7 +46,7 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   },
-  "description": "SlotJack Application - Production Build",
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
   "main": "next.config.js",
   "repository": {
     "type": "git",
@@ -54,8 +58,5 @@
   "bugs": {
     "url": "https://github.com/Minodevs/slotjack/issues"
   },
-  "homepage": "https://github.com/Minodevs/slotjack#readme",
-  "engines": {
-    "node": ">=18.17.0"
-  }
+  "homepage": "https://github.com/Minodevs/slotjack#readme"
 }
