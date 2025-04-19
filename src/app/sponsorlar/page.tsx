@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Gift, ExternalLink, Star } from 'lucide-react';
 import ClientLayout from '@/components/ClientLayout';
-import Image from 'next/image';
 import { getSponsors, Sponsor } from '@/services/SponsorsService';
 import GridCard, { 
   GridCardContainer, 
@@ -13,6 +12,7 @@ import GridCard, {
   GridCardTitle, 
   GridCardDescription 
 } from '@/components/GridCard';
+import { VIPSiteCard, VIPSiteGrid } from '@/components/VIPSiteCard';
 
 export default function SponsorsPage() {
   const [activeCategory, setActiveCategory] = useState<'all' | 'vip'>('all');
@@ -70,46 +70,20 @@ export default function SponsorsPage() {
         {featuredSponsors.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-white mb-6">VIP Siteler</h2>
-            <GridCardContainer>
+            <VIPSiteGrid>
               {featuredSponsors.map(sponsor => (
-                <GridCard key={sponsor.id}>
-                  <div className="absolute top-2 right-2 z-10">
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                  </div>
-                  <GridCardImage 
-                    src={sponsor.logo} 
-                    alt={sponsor.name} 
-                  />
-                  <GridCardContent>
-                    <div className="text-center mb-4">
-                      <p className="text-[#FF6B00] font-bold text-md">{sponsor.bonuses[0].text}</p>
-                      <p className="text-gray-300 text-xs">{sponsor.bonuses[1].text}</p>
-                    </div>
-                    
-                    {/* Tags */}
-                    {sponsor.tags && sponsor.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center mb-3">
-                        {sponsor.tags.map((tag, index) => (
-                          <span key={index} className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </GridCardContent>
-                  <GridCardFooter>
-                    <a 
-                      href={sponsor.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="bg-[#FF6B00] hover:bg-[#E05A00] text-white text-xs font-medium py-2 rounded w-full text-center block"
-                    >
-                      {sponsor.buttonText}
-                    </a>
-                  </GridCardFooter>
-                </GridCard>
+                <VIPSiteCard
+                  key={sponsor.id}
+                  logo={sponsor.logo}
+                  name={sponsor.name}
+                  primaryBonus={sponsor.bonuses[0].text}
+                  secondaryBonus={sponsor.bonuses[1].text}
+                  tags={sponsor.tags}
+                  buttonText={sponsor.buttonText}
+                  buttonLink={sponsor.website}
+                />
               ))}
-            </GridCardContainer>
+            </VIPSiteGrid>
           </div>
         )}
         
