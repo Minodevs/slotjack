@@ -78,6 +78,7 @@ interface Event {
   endDate?: string;
   minDeposit?: number;
   depositText?: string;
+  hasEnded?: boolean;
 }
 
 // Local storage key for events data
@@ -113,7 +114,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-04-16',
     endDate: '2023-04-17',
     minDeposit: 1000,
-    depositText: 'SPORTSBET\'TEN 20 KİŞİYE 100.000₺ NAKİT'
+    depositText: 'SPORTSBET\'TEN 20 KİŞİYE 100.000₺ NAKİT',
+    hasEnded: true
   },
   {
     id: '2',
@@ -141,7 +143,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-05-01',
     endDate: '2023-05-15',
     minDeposit: 500,
-    depositText: 'ISISBET\'TEN ÖZEL NAKİT ÖDÜLÜ'
+    depositText: 'ISISBET\'TEN ÖZEL NAKİT ÖDÜLÜ',
+    hasEnded: true
   },
   {
     id: '3',
@@ -169,7 +172,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-06-01',
     endDate: '2023-06-30',
     minDeposit: 750,
-    depositText: 'GAMBİ\'DEN FREESPIN ÖDÜLÜ'
+    depositText: 'GAMBİ\'DEN FREESPIN ÖDÜLÜ',
+    hasEnded: true
   },
   {
     id: '4',
@@ -197,7 +201,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-07-01',
     endDate: '2023-07-15',
     minDeposit: 250,
-    depositText: 'EFESBET\'TEN NAKİT ÖDÜLÜ'
+    depositText: 'EFESBET\'TEN NAKİT ÖDÜLÜ',
+    hasEnded: true
   },
   {
     id: '5',
@@ -225,7 +230,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-08-01',
     endDate: '2023-08-15',
     minDeposit: 500,
-    depositText: 'ZLOT\'TAN KADINLAR GÜNÜ ÖZEL ÖDÜLÜ'
+    depositText: 'ZLOT\'TAN KADINLAR GÜNÜ ÖZEL ÖDÜLÜ',
+    hasEnded: true
   },
   {
     id: '6',
@@ -253,7 +259,8 @@ const defaultEventsData: Event[] = [
     beginDate: '2023-09-01',
     endDate: '2023-09-30',
     minDeposit: 300,
-    depositText: 'BETNANO\'DAN KAYIT ÖDÜLÜ'
+    depositText: 'BETNANO\'DAN KAYIT ÖDÜLÜ',
+    hasEnded: true
   }
 ];
 
@@ -466,10 +473,10 @@ export default function EventsPage() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="w-full flex items-center justify-center min-h-[500px] bg-gray-900">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin mb-4 mx-auto"></div>
-            <p className="text-gray-400">Yükleniyor...</p>
+            <div className="inline-block w-8 h-8 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-base text-gray-300">Yükleniyor...</p>
           </div>
         </div>
       </ClientLayout>
@@ -501,230 +508,90 @@ export default function EventsPage() {
   
   return (
     <ClientLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <h1 className="text-2xl font-bold mb-6 flex items-center">
-          <Calendar className="mr-2 text-[#FF6B00]" /> Etkinlikler
-        </h1>
-        
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                selectedCategory === category.id
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-        
-        {/* Events Grid */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-12 h-12 border-t-2 border-b-2 border-[#FF6B00] rounded-full animate-spin"></div>
-          </div>
-        ) : filteredEvents.length > 0 ? (
-          <GridCardContainer>
+      <div className="bg-gray-900 min-h-screen pb-10">
+        <div className="max-w-7xl mx-auto px-4 pt-8">
+          {/* Events Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <GridCard 
-                key={event.id} 
-                onClick={() => handleEventClick(event)}
-                className="cursor-pointer"
-              >
+              <div key={event.id} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 h-full flex flex-col">
                 {/* Event Image */}
-                <div className="relative h-32 w-full">
-                  <Image
-                    src={event.image || '/placeholder-icon.svg'}
+                <div className="relative w-full h-48">
+                  <img 
+                    src={event.image} 
                     alt={event.title}
-                    fill
-                    style={{
-                      objectFit: 'cover',
-                    }}
-                    className={`rounded-t-lg ${event.image ? '' : 'p-5 bg-gray-700'}`}
+                    className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black opacity-70"></div>
                   
-                  {/* Sponsor Logo */}
-                  {event.partnerLogo && (
-                    <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
-                      <Image
-                        src={event.partnerLogo}
-                        alt={event.partnerName || 'Sponsor'}
-                        width={24}
-                        height={24}
-                        className="rounded-full"
-                      />
-                    </div>
-                  )}
+                  {/* Partner Logo Overlay */}
+                  <div className="absolute top-4 left-4">
+                    <img 
+                      src={event.partnerLogo} 
+                      alt={event.partnerName}
+                      className="h-8 object-contain"
+                    />
+                  </div>
+                  
+                  {/* Event Type Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 text-center p-4 text-white font-bold text-xl bg-gradient-to-t from-black/70 to-transparent">
+                    {event.subtitle}
+                  </div>
                 </div>
                 
                 {/* Event Content */}
-                <GridCardContent>
-                  <GridCardTitle className="mb-2">{event.title}</GridCardTitle>
+                <div className="p-4 flex-grow">
+                  <h3 className="text-white text-lg font-bold leading-tight mb-6">
+                    {event.title}
+                  </h3>
                   
-                  <div className="flex items-center text-xs text-gray-400 mb-1">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    <span>{event.date}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-xs text-gray-400">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    <span>{event.location}</span>
-                  </div>
-                  
-                  {event.depositText && (
-                    <div className="mt-2 text-xs text-center font-medium text-amber-500">
-                      {event.depositText}
+                  {/* Event Timer */}
+                  <div className="grid grid-cols-4 gap-2 mb-4">
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-xl text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">GÜN</div>
                     </div>
-                  )}
-                </GridCardContent>
-                
-                {/* Event Footer */}
-                <GridCardFooter className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Coins className="w-4 h-4 text-yellow-500 mr-1" />
-                    <span className="text-xs font-medium text-white">{event.reward}</span>
-                  </div>
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (joinedEvents.includes(event.id)) {
-                        // Already joined
-                        return;
-                      }
-                      handleJoinEvent(event.id, event.title, event.reward);
-                    }}
-                    className={`text-xs px-3 py-1 rounded font-medium ${
-                      joinedEvents.includes(event.id)
-                        ? 'bg-green-600 text-white'
-                        : 'bg-[#FF6B00] hover:bg-[#E05A00] text-white'
-                    }`}
-                  >
-                    {joinedEvents.includes(event.id) ? 'Katıldınız' : 'Katıl'}
-                  </button>
-                </GridCardFooter>
-              </GridCard>
-            ))}
-          </GridCardContainer>
-        ) : (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 text-center">
-            <Calendar className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Etkinlik Bulunamadı</h3>
-            <p className="text-gray-400">Bu kategoride şu anda aktif etkinlik bulunmamaktadır.</p>
-          </div>
-        )}
-        
-        {/* Floating Coin Animation */}
-        <FloatingCoin 
-          amount={coinAmount}
-          isVisible={showCoinAnim}
-          onAnimationEnd={() => setShowCoinAnim(false)}
-        />
-        
-        {/* Join Confirmation Modal */}
-        {showJoinModal && joiningEvent && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg max-w-md w-full p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Etkinliğe Katıl</h3>
-              <p className="text-gray-300 mb-6">
-                <strong>{joiningEvent.title}</strong> etkinliğine katılmak istediğinize emin misiniz?
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowJoinModal(false)}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
-                >
-                  İptal
-                </button>
-                <button
-                  onClick={handleJoinConfirm}
-                  className="px-4 py-2 bg-[#FF6B00] hover:bg-[#E05A00] text-white rounded-md"
-                >
-                  Katıl
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Event Details Modal */}
-        {showEventDetails && selectedEvent && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-gray-800 rounded-lg max-w-md w-full p-6 relative">
-              <button 
-                onClick={() => setShowEventDetails(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <h3 className="text-xl font-bold text-white mb-4">{selectedEvent.title}</h3>
-              
-              <div className="relative h-40 w-full mb-4">
-                <Image
-                  src={selectedEvent.image || '/placeholder-icon.svg'}
-                  alt={selectedEvent.title}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="rounded-lg"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <p className="text-gray-300 mb-4">{selectedEvent.description}</p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-start">
-                    <Calendar className="w-5 h-5 text-[#FF6B00] mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-white font-medium">Tarih</p>
-                      <p className="text-gray-400 text-sm">{selectedEvent.date} {selectedEvent.time}</p>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-xl text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">SAAT</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-xl text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">DAKİKA</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-xl text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">SANİYE</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-start">
-                    <MapPin className="w-5 h-5 text-[#FF6B00] mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-white font-medium">Konum</p>
-                      <p className="text-gray-400 text-sm">{selectedEvent.location}</p>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-gray-700 rounded p-2 text-center">
+                      <div className="text-yellow-500 font-bold text-base">Toplam Ödül</div>
+                      <div className="text-white font-bold">{event.stats.prizePool.toLocaleString()} ₺</div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <Coins className="w-5 h-5 text-[#FF6B00] mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-white font-medium">Ödül</p>
-                      <p className="text-gray-400 text-sm">{selectedEvent.reward} puan</p>
+                    <div className="bg-gray-700 rounded p-2 text-center">
+                      <div className="text-yellow-500 font-bold text-base">Maks Katılım</div>
+                      <div className="text-white font-bold">{event.stats.limit}</div>
                     </div>
                   </div>
                 </div>
+                
+                {/* Event Footer */}
+                <div className="p-4 bg-gray-800">
+                  <div className="rounded-lg border border-gray-600 p-3 text-center">
+                    <span className="text-gray-300">Etkinlik tarihi sona erdi.</span>
+                  </div>
+                </div>
               </div>
-              
-              <button
-                onClick={() => {
-                  setShowEventDetails(false);
-                  if (!joinedEvents.includes(selectedEvent.id)) {
-                    handleJoinEvent(selectedEvent.id, selectedEvent.title, selectedEvent.reward);
-                  }
-                }}
-                className={`w-full py-2 rounded-md text-white font-medium ${
-                  joinedEvents.includes(selectedEvent.id)
-                    ? 'bg-green-600'
-                    : 'bg-[#FF6B00] hover:bg-[#E05A00]'
-                }`}
-              >
-                {joinedEvents.includes(selectedEvent.id) ? 'Katıldınız' : 'Katıl'}
-              </button>
-            </div>
+            ))}
           </div>
-        )}
+
+          {/* No events message */}
+          {filteredEvents.length === 0 && !loading && (
+            <div className="bg-gray-800 rounded-lg p-8 text-center">
+              <p className="text-gray-400">Henüz etkinlik bulunmamaktadır.</p>
+            </div>
+          )}
+        </div>
       </div>
     </ClientLayout>
   );
