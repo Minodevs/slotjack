@@ -4,18 +4,9 @@ import { useState, useEffect } from 'react';
 import { Gift, ExternalLink, Star } from 'lucide-react';
 import ClientLayout from '@/components/ClientLayout';
 import { getSponsors, Sponsor } from '@/services/SponsorsService';
-import GridCard, { 
-  GridCardContainer, 
-  GridCardContent, 
-  GridCardFooter, 
-  GridCardImage, 
-  GridCardTitle, 
-  GridCardDescription 
-} from '@/components/GridCard';
 import { VIPSiteCard, VIPSiteGrid } from '@/components/VIPSiteCard';
 
 export default function SponsorsPage() {
-  const [activeCategory, setActiveCategory] = useState<'all' | 'vip'>('all');
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -58,18 +49,22 @@ export default function SponsorsPage() {
   
   return (
     <ClientLayout>
-      <div className="w-full px-2 py-4">
+      <div className="w-full px-2 py-4 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold flex items-center">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center">
             <Gift className="w-7 h-7 text-[#FF6B00] mr-2" />
             SLOTJACK İN TERCİHİ
           </h1>
+          <p className="text-gray-400 mt-2">En iyi bahis siteleri ve bonusları</p>
         </div>
         
         {/* Featured Sponsors Section */}
         {featuredSponsors.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Vip Siteler</h2>
+            <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mr-2" />
+              VIP Siteler
+            </h2>
             <VIPSiteGrid>
               {featuredSponsors.map(sponsor => (
                 <VIPSiteCard

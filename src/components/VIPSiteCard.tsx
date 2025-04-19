@@ -29,11 +29,12 @@ export function VIPSiteCard({
       </div>
       
       {/* Logo */}
-      <div className="relative w-full h-28 flex items-center justify-center p-4">
+      <div className="relative w-full h-28 flex items-center justify-center p-4 bg-gray-900">
         <img 
           src={logo} 
           alt={name} 
           className="object-contain h-full max-w-full" 
+          style={{ maxHeight: "80px" }}
         />
       </div>
       
@@ -60,7 +61,7 @@ export function VIPSiteCard({
           href={buttonLink} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium py-3 rounded-md w-full text-center block text-base"
+          className="bg-[#FF6B00] hover:bg-[#E05A00] text-white font-medium py-3 rounded-md w-full text-center block text-base transition-colors"
         >
           {buttonText}
         </a>
@@ -71,7 +72,7 @@ export function VIPSiteCard({
 
 export function VIPSiteGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {children}
     </div>
   );
