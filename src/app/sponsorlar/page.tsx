@@ -39,8 +39,8 @@ export default function SponsorsPage() {
       <ClientLayout>
         <div className="w-full flex items-center justify-center min-h-[500px]">
           <div className="text-center">
-            <div className="inline-block w-10 h-10 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-lg">Yükleniyor...</p>
+            <div className="inline-block w-8 h-8 sm:w-10 sm:h-10 border-3 sm:border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-3 sm:mb-4"></div>
+            <p className="text-base sm:text-lg">Yükleniyor...</p>
           </div>
         </div>
       </ClientLayout>
@@ -49,20 +49,20 @@ export default function SponsorsPage() {
   
   return (
     <ClientLayout>
-      <div className="w-full px-2 py-4 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center">
-            <Gift className="w-7 h-7 text-[#FF6B00] mr-2" />
+      <div className="w-full px-3 py-3 sm:px-4 sm:py-4 max-w-7xl mx-auto">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center">
+            <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-[#FF6B00] mr-2" />
             SLOTJACK İN TERCİHİ
           </h1>
-          <p className="text-gray-400 mt-2">En iyi bahis siteleri ve bonusları</p>
+          <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">En iyi bahis siteleri ve bonusları</p>
         </div>
         
         {/* Featured Sponsors Section */}
         {featuredSponsors.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mr-2" />
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500 mr-1.5 sm:mr-2" />
               VIP Siteler
             </h2>
             <VIPSiteGrid>
@@ -85,7 +85,7 @@ export default function SponsorsPage() {
         {/* Regular Sponsors Section */}
         {regularSponsors.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold text-white mb-4">Önerilen Siteler</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Önerilen Siteler</h2>
             <VIPSiteGrid>
               {regularSponsors.map(sponsor => (
                 <VIPSiteCard
@@ -105,8 +105,8 @@ export default function SponsorsPage() {
         
         {/* No sponsors message */}
         {sponsors.length === 0 && !loading && (
-          <div className="bg-gray-800 rounded-lg p-8 text-center">
-            <p className="text-gray-400">Henüz sponsor bulunmamaktadır.</p>
+          <div className="bg-gray-800 rounded-lg p-6 sm:p-8 text-center">
+            <p className="text-gray-400 text-sm sm:text-base">Henüz sponsor bulunmamaktadır.</p>
           </div>
         )}
       </div>
