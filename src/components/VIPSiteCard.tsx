@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VIPSiteCardProps {
@@ -8,8 +8,9 @@ interface VIPSiteCardProps {
   primaryBonus: string;
   secondaryBonus: string;
   tags?: string[];
-  buttonText: string;
+  buttonText?: string;
   buttonLink: string;
+  extraTags?: Array<{text: string, className?: string}>;
 }
 
 export function VIPSiteCard({
@@ -18,66 +19,83 @@ export function VIPSiteCard({
   primaryBonus,
   secondaryBonus,
   tags = [],
-  buttonText,
-  buttonLink
+  buttonText = "Üye Ol",
+  buttonLink,
+  extraTags = []
 }: VIPSiteCardProps) {
   return (
-    <div className="card market flex flex-col bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-[#FF6B00] transition-colors relative h-full">
-      {/* VIP Star */}
-      <div className="absolute top-3 right-3 z-10 sm:top-2 sm:right-2">
-        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+    <div className="relative w-full h-full">
+      {/* Crown icon */}
+      <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="rounded-full bg-yellow-500 p-2 w-10 h-10 flex items-center justify-center">
+          <Crown className="w-6 h-6 text-black" />
+        </div>
       </div>
       
-      {/* Logo */}
-      <div className="image relative w-full h-24 sm:h-28 flex items-center justify-center p-3 sm:p-4 bg-gray-900">
-        <img 
-          src={logo} 
-          alt={name} 
-          className="object-contain h-full max-w-full" 
-          style={{ maxHeight: "70px" }}
-        />
-      </div>
-      
-      {/* Content */}
-      <div className="bottom p-3 sm:p-4 flex flex-col items-center justify-center flex-grow text-center">
-        <h1 className="text-[#FF6B00] font-bold text-xl sm:text-2xl mb-1">{primaryBonus}</h1>
-        <p className="text-white text-sm sm:text-base mb-2 sm:mb-3">{secondaryBonus}</p>
+      <div className="pt-5 flex flex-col bg-gray-900 border border-gray-700 rounded-lg overflow-hidden shadow-lg h-full">        
+        {/* Logo */}
+        <div className="w-full h-24 flex items-center justify-center mb-4">
+          <img 
+            src={logo} 
+            alt={name} 
+            className="object-contain max-h-12 max-w-[80%]" 
+          />
+        </div>
         
-        {/* Tags */}
-        {tags && tags.length > 0 && (
-          <div className="row flex flex-wrap gap-1.5 sm:gap-2 justify-center my-2 w-full">
-            {tags.map((tag, index) => (
-              <span key={index} className="bg-gray-700 text-white text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-md">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Main Bonus */}
+        <div className="px-3 text-center">
+          <h3 className="text-yellow-500 font-bold text-xl mb-1">{primaryBonus}</h3>
+          <p className="text-white text-base mb-3">{secondaryBonus}</p>
+        </div>
         
-        {/* Button */}
-        <div className="w-full mt-2">
-          <a 
-            href={buttonLink} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="bg-[#FF6B00] hover:bg-[#E05A00] active:bg-[#CC5200] text-white font-medium py-2.5 sm:py-3 rounded-md w-full text-center block text-sm sm:text-base transition-colors"
-          >
-            {buttonText}
-          </a>
+        {/* Tags/Additional Info */}
+        <div className="flex flex-col gap-2 mx-3 mb-3">
+          {tags && tags.length > 0 && (
+            <div className="flex flex-wrap justify-center">
+              {tags.map((tag, index) => (
+                <span key={index} className="bg-gray-800 text-white text-sm px-3 py-1 rounded mx-1 my-1">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Extra Tags (like slotjack25 or specific bonus info) */}
+          {extraTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center mt-1">
+              {extraTags.map((tag, index) => (
+                <span key={index} 
+                  className={cn("bg-gray-800 text-white text-sm px-3 py-1 rounded", 
+                  tag.className)}>
+                  {tag.text}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Stats or Secondary Info (if needed) */}
+        <div className="mt-auto">
+          {buttonText && (
+            <a 
+              href={buttonLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-[#FF6B00] text-white font-medium py-2 block w-full text-center"
+            >
+              {buttonText}
+            </a>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export function VIPSiteGrid({ children }: { children: React.ReactNode }) {
+export function SiteCardsGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="row flex-wrap flex">
-      {React.Children.map(children, (child) => (
-        <div className="col col-3">
-          {child}
-        </div>
-      ))}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
+      {children}
     </div>
   );
 } 

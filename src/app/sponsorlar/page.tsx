@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, ExternalLink, Star } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import ClientLayout from '@/components/ClientLayout';
 import { getSponsors, Sponsor } from '@/services/SponsorsService';
-import { VIPSiteCard, VIPSiteGrid } from '@/components/VIPSiteCard';
+import { VIPSiteCard, SiteCardsGrid } from '@/components/VIPSiteCard';
+import Image from 'next/image';
 
 export default function SponsorsPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
@@ -37,10 +38,10 @@ export default function SponsorsPage() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="w-full flex items-center justify-center min-h-[500px]">
+        <div className="w-full flex items-center justify-center min-h-[500px] bg-gray-900">
           <div className="text-center">
-            <div className="inline-block w-8 h-8 sm:w-10 sm:h-10 border-3 sm:border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-3 sm:mb-4"></div>
-            <p className="text-base sm:text-lg">Yükleniyor...</p>
+            <div className="inline-block w-8 h-8 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-base text-gray-300">Yükleniyor...</p>
           </div>
         </div>
       </ClientLayout>
@@ -49,68 +50,138 @@ export default function SponsorsPage() {
   
   return (
     <ClientLayout>
-      <div className="market">
-        <div className="row flex-wrap">
-          <div className="w-full px-3 py-3 sm:px-4 sm:py-4">
-            <div className="mb-4 sm:mb-6">
-              <h1 className="text-xl sm:text-2xl font-bold flex items-center">
-                <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-[#FF6B00] mr-2" />
-                SLOTJACK İN TERCİHİ
-              </h1>
-              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">En iyi bahis siteleri ve bonusları</p>
+      <div className="bg-gray-900 min-h-screen pb-10">
+        {/* Global sponsors section (from screenshot) */}
+        <div className="px-4 pt-8 pb-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* First global sponsor */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                <div className="p-6 flex flex-col items-center">
+                  <div className="mb-4">
+                    <img 
+                      src="/sponsored parts/sportsbet.io.png" 
+                      alt="Sportsbet.io" 
+                      className="h-10 object-contain" 
+                    />
+                  </div>
+                  <div className="text-center mb-4">
+                    <span className="text-[#FF6B00] text-lg font-medium">GLOBAL</span>{' '}
+                    <span className="text-white text-lg font-medium">ANA SPONSOR</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="bg-gray-800 rounded p-4 text-center">
+                      <div className="text-yellow-500 font-bold text-xl mb-1">%100</div>
+                      <div className="text-gray-300 text-sm leading-tight">
+                        HOŞ GELDİN CASİNO BONUSU
+                      </div>
+                    </div>
+                    <div className="bg-gray-800 rounded p-4 text-center">
+                      <div className="text-white font-bold text-xl mb-1">LİMİTSİZ</div>
+                      <div className="text-gray-300 text-sm leading-tight">
+                        KAT KURALSIZ ÇEKİM İMKANI
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Second global sponsor */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                <div className="p-6 flex flex-col items-center">
+                  <div className="mb-4">
+                    <img 
+                      src="/sponsored parts/mistycasino.png" 
+                      alt="Misty Casino" 
+                      className="h-10 object-contain" 
+                    />
+                  </div>
+                  <div className="text-center mb-4">
+                    <span className="text-[#FF6B00] text-lg font-medium">GLOBAL</span>{' '}
+                    <span className="text-white text-lg font-medium">SPONSOR</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="bg-gray-800 rounded p-4 text-center">
+                      <div className="text-yellow-500 font-bold text-xl mb-1">%200</div>
+                      <div className="text-gray-300 text-sm leading-tight">
+                        İLK YATIRIM BONUSU
+                      </div>
+                    </div>
+                    <div className="bg-gray-800 rounded p-4 text-center">
+                      <div className="text-white font-bold text-xl mb-1">LİMİTSİZ</div>
+                      <div className="text-gray-300 text-sm leading-tight">
+                        KAT KURALSIZ ÇEKİM İMKANI
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            {/* Featured Sponsors Section */}
-            {featuredSponsors.length > 0 && (
-              <div className="mb-6 sm:mb-8">
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
-                  VIP Siteler
-                </h2>
-                <VIPSiteGrid>
-                  {featuredSponsors.map(sponsor => (
-                    <VIPSiteCard
-                      key={sponsor.id}
-                      logo={sponsor.logo}
-                      name={sponsor.name}
-                      primaryBonus={sponsor.bonuses[0].text}
-                      secondaryBonus={sponsor.bonuses[1].text}
-                      tags={sponsor.tags}
-                      buttonText={sponsor.buttonText}
-                      buttonLink={sponsor.website}
-                    />
-                  ))}
-                </VIPSiteGrid>
-              </div>
-            )}
-            
-            {/* Regular Sponsors Section */}
-            {regularSponsors.length > 0 && (
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Önerilen Siteler</h2>
-                <VIPSiteGrid>
-                  {regularSponsors.map(sponsor => (
-                    <VIPSiteCard
-                      key={sponsor.id}
-                      logo={sponsor.logo}
-                      name={sponsor.name}
-                      primaryBonus={sponsor.bonuses[0].text}
-                      secondaryBonus={sponsor.bonuses[1].text}
-                      tags={sponsor.tags}
-                      buttonText={sponsor.buttonText}
-                      buttonLink={sponsor.website}
-                    />
-                  ))}
-                </VIPSiteGrid>
-              </div>
-            )}
-            
-            {/* No sponsors message */}
-            {sponsors.length === 0 && !loading && (
-              <div className="bg-gray-800 rounded-lg p-6 sm:p-8 text-center">
-                <p className="text-gray-400 text-sm sm:text-base">Henüz sponsor bulunmamaktadır.</p>
-              </div>
-            )}
           </div>
+        </div>
+        
+        {/* Slotjack section */}
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">SLOTJACK'İN TERCİHİ</h2>
+          
+          {/* VIP Siteler Grid */}
+          <div className="relative pb-10">
+            <SiteCardsGrid>
+              {featuredSponsors.map(sponsor => {
+                // Find any specific tags to display
+                const extraTags = [];
+                
+                // Some examples based on your screenshots
+                if (sponsor.name === "Zlot") {
+                  extraTags.push({text: "%30 VIP Kayıp Bonusu"});
+                } else if (sponsor.name === "ESBet") {
+                  extraTags.push({text: "Sınırsız Çekim İmkanı"});
+                  extraTags.push({text: "slotjack25", className: "bg-gray-800 text-yellow-500"});
+                }
+                
+                return (
+                  <VIPSiteCard
+                    key={sponsor.id}
+                    logo={sponsor.logo}
+                    name={sponsor.name}
+                    primaryBonus={sponsor.bonuses[0].text}
+                    secondaryBonus={sponsor.bonuses[1].text}
+                    tags={sponsor.tags}
+                    buttonText="Kayıt Ol"
+                    buttonLink={sponsor.website}
+                    extraTags={extraTags}
+                  />
+                );
+              })}
+            </SiteCardsGrid>
+          </div>
+          
+          {/* Regular Sponsors Section (if needed) */}
+          {regularSponsors.length > 0 && (
+            <div className="mt-12">
+              <SiteCardsGrid>
+                {regularSponsors.map(sponsor => (
+                  <VIPSiteCard
+                    key={sponsor.id}
+                    logo={sponsor.logo}
+                    name={sponsor.name}
+                    primaryBonus={sponsor.bonuses[0].text}
+                    secondaryBonus={sponsor.bonuses[1].text}
+                    tags={sponsor.tags}
+                    buttonText="Kayıt Ol"
+                    buttonLink={sponsor.website}
+                  />
+                ))}
+              </SiteCardsGrid>
+            </div>
+          )}
+          
+          {/* No sponsors message */}
+          {sponsors.length === 0 && !loading && (
+            <div className="bg-gray-800 rounded-lg p-8 text-center">
+              <p className="text-gray-400">Henüz sponsor bulunmamaktadır.</p>
+            </div>
+          )}
         </div>
       </div>
     </ClientLayout>
