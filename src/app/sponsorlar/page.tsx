@@ -49,9 +49,9 @@ export default function SponsorsPage() {
   
   return (
     <ClientLayout>
-      <div className="w-full px-3 py-3 sm:px-4 sm:py-4 max-w-7xl mx-auto">
+      <div className="w-full px-3 py-3 sm:px-4 sm:py-4">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center">
             <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-[#FF6B00] mr-2" />
             SLOTJACK İN TERCİHİ
           </h1>
@@ -61,8 +61,7 @@ export default function SponsorsPage() {
         {/* Featured Sponsors Section */}
         {featuredSponsors.length > 0 && (
           <div className="mb-6 sm:mb-8">
-            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500 mr-1.5 sm:mr-2" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
               VIP Siteler
             </h2>
             <VIPSiteGrid>

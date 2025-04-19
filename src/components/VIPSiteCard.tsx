@@ -22,9 +22,9 @@ export function VIPSiteCard({
   buttonLink
 }: VIPSiteCardProps) {
   return (
-    <div className="flex flex-col bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-[#FF6B00] transition-colors relative h-full shadow-lg">
+    <div className="flex flex-col bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-[#FF6B00] transition-colors relative h-full">
       {/* VIP Star */}
-      <div className="absolute top-3 right-3 z-10">
+      <div className="absolute top-3 right-3 z-10 sm:top-2 sm:right-2">
         <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
       </div>
       
@@ -72,7 +72,7 @@ export function VIPSiteCard({
 
 export function VIPSiteGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
       {children}
     </div>
   );
