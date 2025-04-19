@@ -84,6 +84,28 @@ export default function MarketPage() {
       </ClientLayout>
     );
   }
+
+  const handlePurchase = (item: MarketItem) => {
+    if (!user) {
+      toast.error('Satın alma işlemi için giriş yapmalısınız');
+      return;
+    }
+    
+    if (userPoints < item.points) {
+      toast.error('Yeterli JackPoint\'iniz bulunmamaktadır');
+      return;
+    }
+    
+    // Simple logic for purchase
+    if (authContext?.updateJackPoints) {
+      authContext.updateJackPoints(
+        -item.points, 
+        `${item.name} satın alındı`, 
+        'spend'
+      );
+      toast.success('Satın alma işlemi başarılı! Telegram üzerinden bizimle iletişime geçin: @slotjack');
+    }
+  };
   
   return (
     <ClientLayout>
@@ -105,10 +127,10 @@ export default function MarketPage() {
             </div>
           </div>
           
-          {/* Market Item Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Market Item Grid - Desktop View */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {marketItems.map((item) => (
-              <div key={item.id} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 flex flex-col">
+              <div key={`desktop-${item.id}`} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 flex flex-col">
                 {/* Item Image */}
                 <div className="relative w-full h-40 bg-blue-900">
                   <img 
@@ -135,31 +157,53 @@ export default function MarketPage() {
                       
                       <button 
                         className="bg-[#FF6B00] hover:bg-[#E05A00] text-white px-4 py-2 rounded-md text-sm font-medium"
-                        onClick={() => {
-                          if (!user) {
-                            toast.error('Satın alma işlemi için giriş yapmalısınız');
-                            return;
-                          }
-                          
-                          if (userPoints < item.points) {
-                            toast.error('Yeterli JackPoint\'iniz bulunmamaktadır');
-                            return;
-                          }
-                          
-                          // Simple logic for purchase
-                          if (authContext?.updateJackPoints) {
-                            authContext.updateJackPoints(
-                              -item.points, 
-                              `${item.name} satın alındı`, 
-                              'spend'
-                            );
-                            toast.success('Satın alma işlemi başarılı! Telegram üzerinden bizimle iletişime geçin: @slotjack');
-                          }
-                        }}
+                        onClick={() => handlePurchase(item)}
                       >
                         Satın Al
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Market Item Grid - Mobile View */}
+          <div className="flex flex-col md:hidden space-y-5">
+            {marketItems.map((item) => (
+              <div key={`mobile-${item.id}`} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 flex flex-col">
+                {/* Item Banner Image - Larger for mobile */}
+                <div className="relative w-full" style={{ backgroundColor: '#192350' }}>
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name}
+                    className="w-full object-contain py-6"
+                    style={{ maxHeight: '180px' }}
+                  />
+                </div>
+                
+                {/* Item Content */}
+                <div className="p-5">
+                  <h3 className="text-white text-xl font-bold mb-2">{item.name}</h3>
+                  
+                  <div className="text-gray-400 text-sm mb-4">
+                    {item.description}
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="bg-gray-700/70 py-2 px-4 rounded-full flex items-center">
+                      <div className="flex items-center gap-2">
+                        <Coins className="w-5 h-5 text-yellow-500" />
+                        <span className="text-white font-bold">{item.points}</span>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      className="bg-[#FF6B00] hover:bg-[#E05A00] text-white px-6 py-3 rounded-full text-sm font-medium"
+                      onClick={() => handlePurchase(item)}
+                    >
+                      Satın Al
+                    </button>
                   </div>
                 </div>
               </div>
