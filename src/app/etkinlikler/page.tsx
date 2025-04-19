@@ -510,10 +510,10 @@ export default function EventsPage() {
     <ClientLayout>
       <div className="bg-gray-900 min-h-screen pb-10">
         <div className="max-w-7xl mx-auto px-4 pt-8">
-          {/* Events Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Events Grid - Desktop View */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <div key={event.id} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 h-full flex flex-col">
+              <div key={`desktop-${event.id}`} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 h-full flex flex-col">
                 {/* Event Image */}
                 <div className="relative w-full h-48">
                   <img 
@@ -578,6 +578,79 @@ export default function EventsPage() {
                 {/* Event Footer */}
                 <div className="p-4 bg-gray-800">
                   <div className="rounded-lg border border-gray-600 p-3 text-center">
+                    <span className="text-gray-300">Etkinlik tarihi sona erdi.</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Events Grid - Mobile View */}
+          <div className="flex flex-col md:hidden space-y-5">
+            {filteredEvents.map((event) => (
+              <div key={`mobile-${event.id}`} className="rounded-lg overflow-hidden bg-gray-800/50 border border-gray-700 flex flex-col">
+                {/* Event Banner Image - Larger for mobile */}
+                <div className="relative w-full" style={{ backgroundColor: '#192350' }}>
+                  <img 
+                    src={event.image} 
+                    alt={event.title}
+                    className="w-full object-cover py-3"
+                    style={{ maxHeight: '180px' }}
+                  />
+                  
+                  {/* Partner Logo Overlay */}
+                  <div className="absolute top-4 left-4">
+                    <img 
+                      src={event.partnerLogo} 
+                      alt={event.partnerName}
+                      className="h-8 object-contain"
+                    />
+                  </div>
+                  
+                  {/* Event Type Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 text-center p-4 text-white font-bold text-xl bg-gradient-to-t from-black/70 to-transparent">
+                    {event.subtitle}
+                  </div>
+                </div>
+                
+                {/* Event Content */}
+                <div className="p-5">
+                  <h3 className="text-white text-xl font-bold mb-3">
+                    {event.title}
+                  </h3>
+                  
+                  {/* Event Timer */}
+                  <div className="grid grid-cols-4 gap-2 mb-4">
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-lg text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">GÜN</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-lg text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">SAAT</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-lg text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">DAKİKA</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-gray-700 rounded-md p-2 text-lg text-white font-bold">0</div>
+                      <div className="mt-1 text-xs text-gray-400">SANİYE</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="bg-gray-700/70 py-2 px-4 rounded-full">
+                      <div className="text-yellow-500 font-bold text-sm">Toplam: {event.stats.prizePool.toLocaleString()} ₺</div>
+                    </div>
+                    
+                    <div className="bg-gray-700/70 py-2 px-4 rounded-full">
+                      <div className="text-yellow-500 font-bold text-sm">Limit: {event.stats.limit}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Event Status */}
+                  <div className="mt-4 rounded-full bg-gray-700/50 border border-gray-600 p-3 text-center">
                     <span className="text-gray-300">Etkinlik tarihi sona erdi.</span>
                   </div>
                 </div>
