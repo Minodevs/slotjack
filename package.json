@@ -8,8 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "deploy": "netlify deploy --prod",
+    "deploy:fresh": "netlify deploy --prod --force",
     "deploy:dry": "netlify deploy",
     "prebuild": "npm run lint",
+    "clean": "rm -rf .next && rm -rf node_modules/.cache",
+    "build:clean": "npm run clean && npm run build",
+    "deploy:clean": "npm run build:clean && npm run deploy:fresh",
     "netlify:dev": "netlify dev",
     "postbuild": "next-sitemap"
   },

@@ -1,34 +1,31 @@
 /** @type {import('next').NextConfig} */
+
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
+  output: 'standalone',
+  reactStrictMode: true,
+  swcMinify: true, // Use SWC minification for better performance
+  
   images: {
+    domains: ['localhost', 'dulcet-tanuki-9e2ad9.netlify.app'],
+    unoptimized: !isProd, // Only optimize in production
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'picsum.photos',
+        hostname: '**',
       },
     ],
   },
-  output: 'standalone',
-  reactStrictMode: true,
-  webpack: (config) => {
-    return config;
-  },
-  // Allow connections from all hosts in development
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-        ],
-      },
-    ];
-  },
+  
   // Explicitly specify page extensions to exclude unwanted routes
   pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'mdx'],
+  
+  // Disable the X-Powered-By header
+  poweredByHeader: false,
+  
+  // Enable compression for better performance
+  compress: true,
   
   // Fix fallback routing for conflicting dynamic routes
   async rewrites() {
@@ -36,23 +33,52 @@ const nextConfig = {
       beforeFiles: [
         // Redirect any page with 'id' in the pathname to prevent conflicts
         {
-          source: '/admin/users/:path*',
-          destination: '/admin/users/:path*',
-          has: [
-            {
-              type: 'query',
-              key: 'id'
-            }
-          ]
+          source: '/admin/users/[id]',
+          destination: '/admin/users/:userId*',
         }
       ]
     };
   },
   
-  // Exclude dynamic pages from export
-  experimental: {
-    // This option is no longer needed in newer versions of Next.js
-    // appDir: true,
+  // Set security headers
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+  
+  // Webpack configuration
+  webpack: (config, { dev, isServer }) => {
+    // Only enable these optimizations in production
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
+      };
+    }
+    
+    return config;
   },
 };
 
