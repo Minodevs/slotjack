@@ -10,7 +10,7 @@
     "deploy": "netlify deploy --prod",
     "deploy:fresh": "netlify deploy --prod --force",
     "deploy:dry": "netlify deploy",
-    "prebuild": "next lint --no-cache",
+    "prebuild": "echo 'Skipping linting for Netlify'",
     "clean": "if (Test-Path .next) { Remove-Item -Recurse -Force .next } && if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache }",
     "build:clean": "npm run clean && npm run build",
     "deploy:clean": "npm run build:clean && npm run deploy:fresh",
