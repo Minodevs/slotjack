@@ -1,0 +1,1 @@
+self.__BUILD_MANIFEST=function(e){return{__rewrites:{afterFiles:[],beforeFiles:[{has:[{type:"query",key:"id"}],source:e,destination:e}],fallback:[]},"/_error":["static/chunks/pages/_error-5fb63848e0136a02.js"],sortedPages:["/_app","/_error"]}}("/admin/users/:path*"),self.__BUILD_MANIFEST_CB&&self.__BUILD_MANIFEST_CB();
