@@ -108,7 +108,7 @@ const nextConfig = {
   
   experimental: {
     // Enable features to improve build process
-    optimizeCss: isProd,
+    optimizeCss: false, // Disable CSS optimization to avoid critters dependency issues
     optimizePackageImports: isProd ? ['lucide-react', 'date-fns', 'framer-motion'] : [],
     turbotrace: isProd ? {
       logLevel: 'error',

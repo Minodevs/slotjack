@@ -22,7 +22,10 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          # Install missing dependencies
+          npm install critters
         
       - name: Clean cache
         run: |
@@ -54,8 +57,10 @@ jobs:
             pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'mdx'],
             poweredByHeader: false,
             compress: true,
+            // Disable features that might cause errors
             experimental: {
-              optimizePackageImports: ['lucide-react', 'date-fns', 'framer-motion']
+              optimizePackageImports: ['lucide-react', 'date-fns', 'framer-motion'],
+              optimizeCss: false
             },
           };
           
