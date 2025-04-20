@@ -27,19 +27,6 @@ const nextConfig = {
   // Enable compression for better performance
   compress: true,
   
-  // Fix fallback routing for conflicting dynamic routes
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // Redirect any page with 'id' in the pathname to prevent conflicts
-        {
-          source: '/admin/users/[id]',
-          destination: '/admin/users/:userId*',
-        }
-      ]
-    };
-  },
-  
   // Set security headers
   async headers() {
     return [
