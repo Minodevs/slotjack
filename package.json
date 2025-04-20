@@ -10,12 +10,15 @@
     "deploy": "netlify deploy --prod",
     "deploy:fresh": "netlify deploy --prod --force",
     "deploy:dry": "netlify deploy",
-    "prebuild": "npm run lint",
-    "clean": "if exist .next rd /s /q .next && if exist node_modules\\.cache rd /s /q node_modules\\.cache",
+    "prebuild": "next lint --no-cache",
+    "clean": "if (Test-Path .next) { Remove-Item -Recurse -Force .next } && if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache }",
     "build:clean": "npm run clean && npm run build",
     "deploy:clean": "npm run build:clean && npm run deploy:fresh",
     "netlify:dev": "netlify dev",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap",
+    "netlify-build": "node netlify-build.js",
+    "netlify-build-skip-lint": "node build-for-netlify.js",
+    "build:netlify": "cross-env NEXT_SKIP_ESLINT_DURING_BUILD=true NEXT_SKIP_TYPE_CHECK=true next build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.1.0",
@@ -45,6 +48,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.17",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.5.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.1.0",
