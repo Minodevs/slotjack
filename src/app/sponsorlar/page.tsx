@@ -15,6 +15,9 @@ export default function SponsorsPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Debug flag - added for Netlify rebuild
+  const forceRebuild = true;
+  
   useEffect(() => {
     // Load sponsors from the service
     const loadSponsors = () => {
