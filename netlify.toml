@@ -1,7 +1,6 @@
 [build]
-  command = "npx cross-env NODE_ENV=production npm run build:netlify"
+  command = "true"
   publish = ".next"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./src/"
   
 [build.environment]
   NODE_VERSION = "18"
@@ -16,30 +15,13 @@
 
 # Production context
 [context.production]
-  command = "npm run clean && npx cross-env NODE_ENV=production NEXT_EXPORT=true NEXT_PUBLIC_DEPLOY_ENV=production npm run build:netlify"
+  command = "true"
   publish = ".next"
 
 # Deploy Preview context
 [context.deploy-preview]
-  command = "npm run clean && npx cross-env NODE_ENV=production NEXT_EXPORT=true NEXT_PUBLIC_DEPLOY_ENV=staging npm run build:netlify"
-
-# Auto optimize for better performance
-[build.processing]
-  skip_processing = false
-
-[build.processing.css]
-  bundle = true
-  minify = true
-
-[build.processing.js]
-  bundle = true
-  minify = true
-
-[build.processing.html]
-  pretty_urls = true
-
-[build.processing.images]
-  compress = true
+  command = "true"
+  publish = ".next"
 
 # Handle Next.js routing - critical for proper path handling
 [[redirects]]
