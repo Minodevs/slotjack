@@ -1,6 +1,6 @@
 [build]
-  publish = "deployment"
-  command = "echo 'Using pre-built files from deployment directory'"
+  publish = ".next"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
