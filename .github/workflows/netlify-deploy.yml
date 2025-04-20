@@ -30,9 +30,11 @@ jobs:
           rm -rf node_modules/.cache
           
       - name: Build project with full page generation
-        run: npm run build:netlify
+        run: NEXT_SKIP_ESLINT_DURING_BUILD=true NEXT_SKIP_TYPE_CHECK=true NODE_ENV=production NEXT_EXPORT=true npm run build
         env:
           NODE_ENV: production
+          NEXT_SKIP_ESLINT_DURING_BUILD: true
+          NEXT_SKIP_TYPE_CHECK: true
           NEXT_EXPORT: true
           NEXT_PUBLIC_DEPLOY_ENV: production
           

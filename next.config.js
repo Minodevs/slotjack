@@ -109,7 +109,7 @@ const nextConfig = {
   experimental: {
     // Enable features to improve build process
     optimizeCss: isProd,
-    optimizePackageImports: isProd,
+    optimizePackageImports: isProd ? ['lucide-react', 'date-fns', 'framer-motion'] : [],
     turbotrace: isProd ? {
       logLevel: 'error',
     } : undefined,
