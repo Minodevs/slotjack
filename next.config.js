@@ -114,14 +114,6 @@ const nextConfig = {
       logLevel: 'error',
     } : undefined,
   },
-  
-  // Log build information
-  onBuildStart: () => {
-    console.log('Starting Next.js build with the following configuration:');
-    console.log(`- Environment: ${isProd ? 'Production' : 'Development'}`);
-    console.log(`- Netlify: ${isNetlify ? 'Yes' : 'No'}`);
-    console.log(`- Export Mode: ${shouldExport ? 'Yes' : 'No'}`);
-  },
 };
 
 module.exports = nextConfig; 
