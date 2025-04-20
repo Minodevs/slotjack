@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "make-admin": "node src/scripts/makeAdmin.js",
-    "deploy-package": "node deploy.js"
+    "deploy": "netlify deploy --prod",
+    "deploy:dry": "netlify deploy",
+    "prebuild": "npm run lint",
+    "netlify:dev": "netlify dev",
+    "postbuild": "next-sitemap"
   },
   "dependencies": {
     "@supabase/ssr": "^0.1.0",
@@ -41,6 +44,8 @@
     "dotenv": "^16.5.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.1.0",
+    "netlify-cli": "^17.19.0",
+    "next-sitemap": "^4.2.3",
     "postcss": "^8.4.35",
     "postcss-import": "^16.1.0",
     "tailwindcss": "^3.4.1",
@@ -58,5 +63,8 @@
   "bugs": {
     "url": "https://github.com/Minodevs/slotjack/issues"
   },
-  "homepage": "https://github.com/Minodevs/slotjack#readme"
+  "homepage": "https://github.com/Minodevs/slotjack#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
