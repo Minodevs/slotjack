@@ -99,39 +99,39 @@ export function VIPSiteCardMobile({
   primaryBonus,
   secondaryBonus,
   tags = [],
-  buttonText = "Üye Ol",
+  buttonText = "Kayıt Ol",
   buttonLink,
   extraTags = []
 }: VIPSiteCardProps) {
   return (
-    <div className="relative w-full mb-5">
+    <div className="relative w-full mb-6">
       {/* Crown icon */}
-      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="rounded-full bg-yellow-500 p-1.5 w-8 h-8 flex items-center justify-center">
-          <Crown className="w-5 h-5 text-black" />
+      <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="rounded-full bg-yellow-500 p-2 w-10 h-10 flex items-center justify-center">
+          <Crown className="w-6 h-6 text-black" />
         </div>
       </div>
       
-      <div className="pt-6 bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden shadow-md">        
+      <div className="pt-6 bg-gray-900/90 border border-gray-700 rounded-lg overflow-hidden shadow-md flex flex-col">        
         {/* Logo */}
-        <div className="w-full flex items-center justify-center mb-3">
+        <div className="w-full flex items-center justify-center py-5">
           <img 
             src={logo} 
             alt={name} 
-            className="object-contain h-14" 
+            className="object-contain h-16" 
           />
         </div>
         
         {/* Main Bonus */}
         <div className="px-3 text-center">
-          <h3 className="text-yellow-500 font-bold text-xl mb-1">{primaryBonus}</h3>
-          <p className="text-white text-base mb-4">{secondaryBonus}</p>
+          <h3 className="text-yellow-500 font-bold text-3xl mb-1">{primaryBonus}</h3>
+          <p className="text-white text-lg mb-6">{secondaryBonus}</p>
         </div>
         
         {/* Tags Section with layout similar to image */}
-        <div className="grid grid-cols-2 gap-2 px-3 mb-4">
+        <div className="grid grid-cols-2 gap-2 px-4 mb-4">
           {extraTags && extraTags.length > 0 && extraTags.map((tag, index) => (
-            <div key={index} className="bg-gray-700/70 rounded py-2 px-2 text-center">
+            <div key={index} className="bg-gray-800/90 rounded py-3 px-2 text-center">
               <span className={cn("text-sm font-medium", tag.className || "text-white")}>
                 {tag.text}
               </span>
@@ -140,7 +140,7 @@ export function VIPSiteCardMobile({
           
           {/* If there are traditional tags, add them too */}
           {tags && tags.length > 0 && tags.map((tag, index) => (
-            <div key={`tag-${index}`} className="bg-gray-700/70 rounded py-2 px-2 text-center">
+            <div key={`tag-${index}`} className="bg-gray-800/90 rounded py-3 px-2 text-center">
               <span className="text-sm font-medium text-white">{tag}</span>
             </div>
           ))}
@@ -151,7 +151,7 @@ export function VIPSiteCardMobile({
           href={buttonLink} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-[#FF6B00] text-white font-medium py-3 block w-full text-center"
+          className="bg-[#FF6B00] text-white font-medium py-3 text-center mt-auto"
         >
           {buttonText}
         </a>

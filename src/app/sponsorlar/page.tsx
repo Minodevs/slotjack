@@ -6,6 +6,7 @@ import ClientLayout from '@/components/ClientLayout';
 import { getSponsors, Sponsor } from '@/services/SponsorsService';
 import { VIPSiteCard, VIPSiteCardMobile, SiteCardsGrid } from '@/components/VIPSiteCard';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 // Define the tag type to match what's used in VIPSiteCard
 type ExtraTag = {text: string, className?: string};
@@ -90,14 +91,14 @@ export default function SponsorsPage() {
             </SiteCardsGrid>
           </div>
           
-          {/* Mobile View - New Stacked Layout */}
+          {/* Mobile View - 2-column Grid Layout (as in screenshot) */}
           <div className="relative pb-8 md:hidden">
-            <div className="flex flex-col">
+            <div className="grid grid-cols-2 gap-3">
               {featuredSponsors.map(sponsor => {
                 // Find any specific tags to display
                 const extraTags: ExtraTag[] = [];
                 
-                // Prepare appropriate tags for each sponsor
+                // Prepare appropriate tags for each sponsor based on screenshot
                 if (sponsor.name === "Zlot") {
                   extraTags.push({text: "%30 VIP"});
                   extraTags.push({text: "Kayıp Bonusu"});
@@ -116,16 +117,52 @@ export default function SponsorsPage() {
                 }
                 
                 return (
-                  <VIPSiteCardMobile
-                    key={`mobile-${sponsor.id}`}
-                    logo={sponsor.logo}
-                    name={sponsor.name}
-                    primaryBonus={sponsor.bonuses[0].text}
-                    secondaryBonus={sponsor.bonuses[1].text}
-                    buttonText="Kayıt Ol"
-                    buttonLink={sponsor.website}
-                    extraTags={extraTags}
-                  />
+                  <div key={`mobile-${sponsor.id}`} className="relative mb-3">
+                    {/* Crown icon */}
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <div className="rounded-full bg-yellow-500 p-1 w-8 h-8 flex items-center justify-center">
+                        <Crown className="w-5 h-5 text-black" />
+                      </div>
+                    </div>
+                    
+                    <div className="pt-5 bg-gray-800/90 border border-gray-700 rounded-lg overflow-hidden h-full flex flex-col">
+                      {/* Logo */}
+                      <div className="px-2 py-3 flex items-center justify-center">
+                        <img 
+                          src={sponsor.logo} 
+                          alt={sponsor.name} 
+                          className="object-contain max-h-10" 
+                        />
+                      </div>
+                      
+                      {/* Main Bonus */}
+                      <div className="px-2 text-center">
+                        <h3 className="text-yellow-500 font-bold text-lg">{sponsor.bonuses[0].text}</h3>
+                        <p className="text-white text-sm mb-2">{sponsor.bonuses[1].text}</p>
+                      </div>
+                      
+                      {/* Tag items in smaller boxes */}
+                      <div className="grid grid-cols-1 gap-1 p-2">
+                        {extraTags.map((tag, idx) => (
+                          <div key={idx} className="bg-gray-900/70 text-center py-1 px-1 rounded">
+                            <span className={cn("text-xs", tag.className || "text-white")}>
+                              {tag.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Button */}
+                      <a 
+                        href={sponsor.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-[#FF6B00] text-white text-sm font-medium py-2 text-center mt-auto"
+                      >
+                        Kayıt Ol
+                      </a>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -151,26 +188,59 @@ export default function SponsorsPage() {
             </div>
           )}
           
-          {/* Regular Sponsors Section - Mobile Only */}
+          {/* Regular Sponsors Section - Mobile 2-column Grid */}
           {regularSponsors.length > 0 && (
             <div className="mt-8 md:hidden">
-              <div className="flex flex-col">
+              <div className="grid grid-cols-2 gap-3">
                 {regularSponsors.map(sponsor => {
                   const extraTags: ExtraTag[] = [];
                   // Add any special tags for regular sponsors if needed
                   
                   return (
-                    <VIPSiteCardMobile
-                      key={`mobile-reg-${sponsor.id}`}
-                      logo={sponsor.logo}
-                      name={sponsor.name}
-                      primaryBonus={sponsor.bonuses[0].text}
-                      secondaryBonus={sponsor.bonuses[1].text}
-                      buttonText="Kayıt Ol"
-                      buttonLink={sponsor.website}
-                      extraTags={extraTags}
-                      tags={sponsor.tags}
-                    />
+                    <div key={`mobile-reg-${sponsor.id}`} className="relative mb-3">
+                      {/* Crown icon */}
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <div className="rounded-full bg-yellow-500 p-1 w-8 h-8 flex items-center justify-center">
+                          <Crown className="w-5 h-5 text-black" />
+                        </div>
+                      </div>
+                      
+                      <div className="pt-5 bg-gray-800/90 border border-gray-700 rounded-lg overflow-hidden h-full flex flex-col">
+                        {/* Logo */}
+                        <div className="px-2 py-3 flex items-center justify-center">
+                          <img 
+                            src={sponsor.logo} 
+                            alt={sponsor.name} 
+                            className="object-contain max-h-10" 
+                          />
+                        </div>
+                        
+                        {/* Main Bonus */}
+                        <div className="px-2 text-center">
+                          <h3 className="text-yellow-500 font-bold text-lg">{sponsor.bonuses[0].text}</h3>
+                          <p className="text-white text-sm mb-2">{sponsor.bonuses[1].text}</p>
+                        </div>
+                        
+                        {/* Tag items in smaller boxes */}
+                        <div className="grid grid-cols-1 gap-1 p-2">
+                          {sponsor.tags && sponsor.tags.length > 0 && sponsor.tags.map((tag, idx) => (
+                            <div key={idx} className="bg-gray-900/70 text-center py-1 px-1 rounded">
+                              <span className="text-xs text-white">{tag}</span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Button */}
+                        <a 
+                          href={sponsor.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-[#FF6B00] text-white text-sm font-medium py-2 text-center mt-auto"
+                        >
+                          Kayıt Ol
+                        </a>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
