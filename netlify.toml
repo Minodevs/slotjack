@@ -1,0 +1,24 @@
+[build]
+  publish = "deployment"
+  command = "echo 'Using pre-built files from deployment directory'"
+
+[build.environment]
+  NODE_VERSION = "18"
+  
+# Netlify settings for deploying from a branch
+[build.processing]
+  skip_processing = true
+
+# Force trailing slashes to fix routing issues
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Ensure cached pages are not used
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
