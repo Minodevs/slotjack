@@ -623,10 +623,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
         rank: mapStringToUserRank(authUser.rank),
         isVerified: authUser.isVerified || false,
-        avatar: authUser.avatar,
-        phoneNumber: authUser.phoneNumber,
-        phoneVerified: authUser.phoneVerified,
-        socialAccounts: authUser.socialAccounts,
+        avatar: authUser.avatar || undefined,
+        phoneNumber: authUser.phoneNumber || undefined,
+        phoneVerified: authUser.phoneVerified || false,
+        socialAccounts: authUser.socialAccounts || {},
       };
       
       setUser(userData);
@@ -663,10 +663,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
         rank: mapStringToUserRank(authUser.rank),
         isVerified: authUser.isVerified || false,
-        avatar: authUser.avatar,
-        phoneNumber: authUser.phoneNumber,
-        phoneVerified: authUser.phoneVerified,
-        socialAccounts: authUser.socialAccounts,
+        avatar: authUser.avatar || undefined,
+        phoneNumber: authUser.phoneNumber || undefined,
+        phoneVerified: authUser.phoneVerified || false,
+        socialAccounts: authUser.socialAccounts || {},
       };
       
       setUser(userData);
@@ -825,7 +825,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const result = await authService.updateProfile(data);
       
-      if (result.success) {
+      if (result && result.user) {
         setUser(result.user);
         return true;
       }
@@ -889,10 +889,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               hasReceivedInitialBonus: profileData.hasReceivedInitialBonus || false,
               rank: mapStringToUserRank(profileData.rank),
               isVerified: profileData.isVerified || false,
-              avatar: profileData.avatar,
-              phoneNumber: profileData.phoneNumber,
-              phoneVerified: profileData.phoneVerified,
-              socialAccounts: profileData.socialAccounts,
+              avatar: profileData.avatar || undefined,
+              phoneNumber: profileData.phoneNumber || undefined,
+              phoneVerified: profileData.phoneVerified || false,
+              socialAccounts: profileData.socialAccounts || {},
             };
             
             setUser(userData);

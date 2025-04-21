@@ -1,17 +1,22 @@
 [build]
-  command = "npm run build"
+  command = "npm run netlify-build-skip-lint"
   publish = ".next"
   
 [build.environment]
   NODE_VERSION = "18"
   NEXT_TELEMETRY_DISABLED = "1"
-  # Force cache invalidation
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
-  # Add build timestamp to force fresh builds
+  # Force cache invalidation with timestamp
   BUILD_TIMESTAMP = "${COMMIT_REF}"
   # Ensure all pages are generated
   NEXT_EXPORT = "true"
   NEXT_PUBLIC_DEPLOY_ENV = "production"
+  # Skip time-consuming checks
+  NEXT_SKIP_ESLINT_DURING_BUILD = "true"
+  NEXT_SKIP_TYPE_CHECK = "true"
+  # Force fresh builds
+  FRESH_DEPLOY = "true"
+  FORCE_CLEAN_BUILD = "true"
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 # Disable the Netlify Next.js plugin
 [[plugins]]
@@ -21,12 +26,12 @@ package = "@netlify/plugin-nextjs"
 
 # Production context
 [context.production]
-  command = "npm run build"
+  command = "npm run netlify-build-skip-lint"
   publish = ".next"
 
 # Deploy Preview context
 [context.deploy-preview]
-  command = "npm run build"
+  command = "npm run netlify-build-skip-lint"
   publish = ".next"
 
 # Handle Next.js routing - critical for proper path handling

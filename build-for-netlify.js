@@ -4,58 +4,74 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
-const BUILD_DIR = '.next';
-const DEPLOYMENT_DIR = 'deployment';
+console.log('🚀 Starting enhanced Netlify build process...');
 
-console.log('📦 Starting Netlify build process...');
-
-// Clean previous builds
-console.log('🧹 Cleaning previous builds...');
-try {
-  // Use PowerShell for Windows compatibility
-  execSync('if (Test-Path .next) { Remove-Item -Recurse -Force .next }', { shell: 'powershell.exe' });
-  execSync('if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache }', { shell: 'powershell.exe' });
-  console.log('✅ Cleaned .next directory and build cache');
-} catch (error) {
-  console.error('Failed to clean directories:', error);
+// Check if this is a fresh deployment
+const isFreshDeploy = process.env.NETLIFY_FRESH_DEPLOY === 'true';
+if (isFreshDeploy) {
+  console.log('🔄 FRESH DEPLOYMENT MODE ACTIVATED');
+  console.log('This build will completely replace any existing deployment');
 }
 
-// Run Next.js build with full export
-console.log('🏗️ Building Next.js application with full page export...');
+// Set critical environment variables
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+process.env.NODE_ENV = 'production';
+process.env.NEXT_PUBLIC_DEPLOY_ENV = 'production';
+process.env.NEXT_EXPORT = 'true';
+process.env.NEXT_SKIP_ESLINT_DURING_BUILD = 'true';
+process.env.NEXT_SKIP_TYPE_CHECK = 'true';
+
+// Display build information
+console.log(`Node version: ${process.version}`);
+console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`Platform: ${process.platform}`);
+
+// Ensure .next directory is clean
 try {
-  // Set environment variables to skip TypeScript and ESLint checks
-  // and ensure full static export
-  const env = {
-    ...process.env,
-    NEXT_TELEMETRY_DISABLED: '1',
-    NEXT_SKIP_ESLINT_DURING_BUILD: 'true',
-    NEXT_SKIP_TYPE_CHECK: 'true',
-    NODE_ENV: 'production',
-    NEXT_EXPORT: 'true',
-    NEXT_PUBLIC_DEPLOY_ENV: 'production',
-  };
+  console.log('🧹 Cleaning previous build artifacts...');
+  if (fs.existsSync('.next')) {
+    if (process.platform === 'win32') {
+      execSync('if exist .next rd /s /q .next', { stdio: 'inherit' });
+    } else {
+      execSync('rm -rf .next', { stdio: 'inherit' });
+    }
+  }
   
-  // Force complete rebuild with all pages
+  // Clean cache
+  console.log('🧹 Cleaning build cache...');
+  const cachePath = path.join('node_modules', '.cache');
+  if (fs.existsSync(cachePath)) {
+    if (process.platform === 'win32') {
+      execSync(`if exist "${cachePath}" rd /s /q "${cachePath}"`, { stdio: 'inherit' });
+    } else {
+      execSync(`rm -rf "${cachePath}"`, { stdio: 'inherit' });
+    }
+  }
+
+  // Build Next.js app
+  console.log('🔨 Building Next.js application for Netlify...');
   execSync('next build', { 
-    stdio: 'inherit', 
-    env,
-    maxBuffer: 10 * 1024 * 1024 // 10MB buffer to handle larger outputs
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NEXT_EXPORT: 'true',
+      NETLIFY: 'true'
+    }
   });
-  
-  console.log('✅ Build completed successfully');
-  
+
   // Generate sitemap
-  console.log('📍 Generating sitemap...');
+  console.log('🗺️ Generating sitemap...');
   execSync('next-sitemap', { stdio: 'inherit' });
   
+  console.log('✅ Build completed successfully for Netlify deployment');
 } catch (error) {
-  console.error('❌ Build failed:', error);
+  console.error('❌ Build failed:', error.message);
   process.exit(1);
 }
 
 // Create the deployment directory if it doesn't exist
 console.log('📂 Setting up deployment directory...');
+const DEPLOYMENT_DIR = 'deployment';
 if (!fs.existsSync(DEPLOYMENT_DIR)) {
   fs.mkdirSync(DEPLOYMENT_DIR, { recursive: true });
 }
@@ -64,7 +80,7 @@ if (!fs.existsSync(DEPLOYMENT_DIR)) {
 console.log('📋 Copying files to deployment directory...');
 try {
   // Use PowerShell for Windows compatibility
-  execSync(`if (Test-Path ${BUILD_DIR}) { Copy-Item -Path ${BUILD_DIR}/* -Destination ${DEPLOYMENT_DIR}/ -Recurse -Force }`, 
+  execSync(`if (Test-Path .next) { Copy-Item -Path .next/* -Destination ${DEPLOYMENT_DIR}/ -Recurse -Force }`, 
     { shell: 'powershell.exe' });
   
   // Copy public folder to ensure all static assets are included
