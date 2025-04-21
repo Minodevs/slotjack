@@ -46,13 +46,29 @@ const InstagramIcon = () => (
   </svg>
 );
 
+// Add Twitch Icon
+const TwitchIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+  </svg>
+);
+
+// Add Kick Icon
+const KickIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-3 5h2v6H9V5zm4 0h2v8a1 1 0 01-1 1h-2v-2h1V5zm7 5.5v2a2.5 2.5 0 01-2.5 2.5H14v2h-2v-7h3.5a2.5 2.5 0 012.5 2.5z"/>
+  </svg>
+);
+
 // Social platforms config
 const socialPlatforms = [
   { id: 'telegram', name: 'Telegram', icon: TelegramIcon, color: '#0088cc', baseUrl: 'https://t.me/' },
   { id: 'discord', name: 'Discord', icon: DiscordIcon, color: '#5865F2', baseUrl: '' },
   { id: 'youtube', name: 'YouTube', icon: YoutubeIcon, color: '#FF0000', baseUrl: 'https://youtube.com/@' },
   { id: 'twitter', name: 'Twitter', icon: TwitterIcon, color: '#1DA1F2', baseUrl: 'https://twitter.com/' },
-  { id: 'instagram', name: 'Instagram', icon: InstagramIcon, color: '#C13584', baseUrl: 'https://instagram.com/' }
+  { id: 'instagram', name: 'Instagram', icon: InstagramIcon, color: '#C13584', baseUrl: 'https://instagram.com/' },
+  { id: 'twitch', name: 'Twitch', icon: TwitchIcon, color: '#9146FF', baseUrl: 'https://twitch.tv/' },
+  { id: 'kick', name: 'Kick', icon: KickIcon, color: '#53FC18', baseUrl: 'https://kick.com/' }
 ];
 
 // Prevent static generation of this page
