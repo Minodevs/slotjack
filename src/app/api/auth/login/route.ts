@@ -1,56 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { addTransaction } from '@/services/TransactionsService';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/auth/login
- * Handle user login
+ * Handle user login with Supabase Auth
  */
 export async function POST(request: NextRequest) {
   try {
     console.log('Login API called');
     const { email, password } = await request.json();
     
-    // For demo purposes, any login succeeds
-    // In a real app, you would validate the credentials
+    // Initialize Supabase client
+    const supabase = await createClient();
     
-    // Create a mock user
-    const user = {
-      id: uuidv4(),
+    // Sign in with Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      name: email.split('@')[0],
-      jackPoints: 1000
-    };
+      password,
+    });
     
-    // Create a login transaction to test transaction system
-    try {
-      console.log('Creating login transaction in API for user:', user);
-      const transaction = await addTransaction({
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        amount: 25,
-        description: 'Login bonus (API)',
-        timestamp: Date.now(),
-        type: 'bonus'
-      });
-      console.log('Transaction created successfully:', transaction);
-    } catch (txError) {
-      console.error('Failed to create login transaction in API:', txError);
+    if (error) {
+      console.error('Supabase login error:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: error.message || 'Authentication failed' 
+        },
+        { status: 401 }
+      );
     }
+    
+    if (!data.user) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'User not found' 
+        },
+        { status: 401 }
+      );
+    }
+    
+    // Get user profile from database
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+    
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      // If profile doesn't exist, create one
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email || '',
+          name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+          jackPoints: 10,
+          lastUpdated: new Date().getTime(),
+        });
+      
+      if (upsertError) {
+        console.error('Error creating profile:', upsertError);
+      }
+    }
+    
+    // Create user object
+    const user = {
+      id: data.user.id,
+      email: data.user.email || '',
+      name: profileData?.name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+      jackPoints: profileData?.jackPoints || 10,
+      lastUpdated: profileData?.lastUpdated || new Date().getTime(),
+      hasReceivedInitialBonus: profileData?.hasReceivedInitialBonus || false,
+      rank: profileData?.rank || 'normal',
+      isVerified: data.user.email_confirmed_at != null || profileData?.isVerified || false,
+    };
     
     // Return success response
     return NextResponse.json({
       success: true,
       user,
-      token: `mock-token-${uuidv4()}`
+      token: data.session?.access_token || '',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Authentication failed' 
+        error: error.message || 'Authentication failed' 
       },
       { status: 401 }
     );

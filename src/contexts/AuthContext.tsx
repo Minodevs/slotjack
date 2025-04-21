@@ -22,6 +22,13 @@ interface Transaction {
   type: 'earn' | 'spend' | 'bonus' | 'event' | 'admin';
 }
 
+// Convert string rank to UserRank enum
+const mapStringToUserRank = (rank: string | null | undefined): UserRank => {
+  if (rank === 'admin') return UserRank.ADMIN;
+  if (rank === 'vip') return UserRank.VIP;
+  return UserRank.NORMAL;
+};
+
 // Mock user type
 export type User = {
   id: string;
@@ -597,13 +604,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Edit the signIn function to handle the async nature of Supabase authentication
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const { user } = await authService.login(email, password);
-      setUser(user);
+      const { user: authUser } = await authService.login(email, password);
+      
+      // Convert to proper User type with enum
+      const userData: User = {
+        id: authUser.id,
+        email: authUser.email,
+        name: authUser.name,
+        jackPoints: authUser.jackPoints || 0,
+        transactions: authUser.transactions || [],
+        lastUpdated: authUser.lastUpdated || Date.now(),
+        hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
+        rank: mapStringToUserRank(authUser.rank),
+        isVerified: authUser.isVerified || false,
+        avatar: authUser.avatar,
+        phoneNumber: authUser.phoneNumber,
+        phoneVerified: authUser.phoneVerified,
+        socialAccounts: authUser.socialAccounts,
+      };
+      
+      setUser(userData);
       
       // Refresh leaderboard after login
       refreshLeaderboard();
@@ -611,20 +637,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.toString());
+      setError(error instanceof Error ? error.message : error.toString());
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
+  // Edit the signUp function to handle Supabase authentication
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const { user } = await authService.register(email, password, name);
-      setUser(user);
+      const { user: authUser } = await authService.register(email, password, name);
+      
+      // Convert to proper User type with enum
+      const userData: User = {
+        id: authUser.id,
+        email: authUser.email,
+        name: authUser.name,
+        jackPoints: authUser.jackPoints || 0,
+        transactions: authUser.transactions || [],
+        lastUpdated: authUser.lastUpdated || Date.now(),
+        hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
+        rank: mapStringToUserRank(authUser.rank),
+        isVerified: authUser.isVerified || false,
+        avatar: authUser.avatar,
+        phoneNumber: authUser.phoneNumber,
+        phoneVerified: authUser.phoneVerified,
+        socialAccounts: authUser.socialAccounts,
+      };
+      
+      setUser(userData);
       
       // Refresh leaderboard after registration
       refreshLeaderboard();
@@ -632,20 +677,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     } catch (error: any) {
       console.error('Registration error:', error);
-      setError(error.toString());
+      setError(error instanceof Error ? error.message : error.toString());
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
+  // Edit the signOut function to handle Supabase auth
   const signOut = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Log out user
-      authService.logout();
+      // Log out user with Supabase
+      await authService.logout();
       
       // Clear user state
       setUser(null);
@@ -819,6 +865,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('slotjack_livestream', JSON.stringify(data));
     }
   };
+
+  // Add a useEffect hook to check for an existing Supabase session when the app loads
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        // Check for an active session
+        const isAuth = await authService.isAuthenticated();
+        
+        if (isAuth && !user) {
+          // Get the current user's profile
+          const profileData = await authService.getCurrentUser();
+          
+          // Convert profile data to User type
+          if (profileData) {
+            const userData: User = {
+              id: profileData.id,
+              email: profileData.email,
+              name: profileData.name,
+              jackPoints: profileData.jackPoints || 0,
+              transactions: profileData.transactions || [],
+              lastUpdated: profileData.lastUpdated || Date.now(),
+              hasReceivedInitialBonus: profileData.hasReceivedInitialBonus || false,
+              rank: mapStringToUserRank(profileData.rank),
+              isVerified: profileData.isVerified || false,
+              avatar: profileData.avatar,
+              phoneNumber: profileData.phoneNumber,
+              phoneVerified: profileData.phoneVerified,
+              socialAccounts: profileData.socialAccounts,
+            };
+            
+            setUser(userData);
+          }
+        }
+      } catch (error) {
+        console.error('Session initialization error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (isClient) {
+      initSession();
+    }
+  }, [isClient, user]);
 
   const value = {
     user,
