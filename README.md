@@ -1,94 +1,112 @@
 # SlotJack
 
-A modern web application built with Next.js, featuring mobile-responsive layouts and optimized for deployment.
+A modern slot machine game and bonus platform built with Next.js.
 
 ## Features
 
-- Mobile-responsive layout that adapts to various screen sizes
-- Slide-out navigation on mobile devices
-- Optimized UI elements for touch devices
-- Proper spacing and readability on small screens
+- User authentication with localStorage and optional Supabase integration
+- Slot machine game with customizable payouts and winning combinations
+- User profiles with JackPoints rewards system
+- Admin panel for managing users, rewards, and market items
+- Responsive design for mobile and desktop
+- Market system for redeeming rewards
+
+## Technology Stack
+
+- **Frontend**: React, Next.js 15+, TailwindCSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (optional)
+- **Authentication**: Custom implementation with localStorage, Supabase Auth as fallback
+- **Deployment**: Vercel
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.17.0 or later
+- Node.js 18+ 
 - npm or yarn
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/Minodevs/slotjack.git
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Minodevs/slotjack.git
+   cd slotjack
+   ```
 
-# Navigate to the project directory
-cd slotjack
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-# Install dependencies
-npm install
+3. Set up environment variables:
+   - Create a `.env.local` file based on `.env`
+   - Update with your Supabase credentials (optional)
 
-# Start the development server
-npm run dev
-```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-The application will be available at http://localhost:3000.
+5. Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
 
 ## Deployment
 
-This project is configured for easy deployment using Next.js's standalone output.
+### Deploying to Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set the following environment variables in Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `NEXT_TELEMETRY_DISABLED`: 1
+
+4. Deploy with the following settings:
+   - Framework Preset: Next.js
+   - Build Command: `npm run build`
+   - Output Directory: (leave default)
+   - Install Command: `npm install`
+
+### Manual Deployment
+
+To build the project for production:
 
 ```bash
-# Build the production version
 npm run build
-
-# Create a deployment package
-npm run deploy-package
+npm start
 ```
 
-The deployment package will be available in the `deployment` directory, ready to be deployed to any Node.js hosting environment.
+## Project Structure
 
-### Deployment Instructions
-
-1. Copy all contents from the `deployment` directory to your server
-2. Install Node.js 18.17.0 or later on your server
-3. Run the server:
-   ```bash
-   node server.js
-   ```
-
-By default, the server will run on port 3000. You can change this by setting the PORT environment variable:
-
-```bash
-PORT=8080 node server.js
+```
+slotjack/
+├── public/             # Static files
+├── src/
+│   ├── app/            # Next.js app directory
+│   │   ├── admin/      # Admin panel pages
+│   │   ├── api/        # API routes
+│   │   └── utils/      # Utility functions
+│   ├── components/     # React components
+│   ├── contexts/       # React contexts
+│   ├── lib/            # Library code and utilities
+│   │   └── supabase/   # Supabase integration
+│   ├── styles/         # Global styles
+│   ├── types/          # TypeScript type definitions
+│   └── utils/          # Utility functions
+├── next.config.js      # Next.js configuration
+└── tailwind.config.js  # Tailwind CSS configuration
 ```
 
-## Development
+## Troubleshooting
 
-```bash
-# Start the development server
-npm run dev
-
-# Run linting
-npm run lint
-
-# Build for production
-npm run build
-
-# Start the production server locally
-npm run start
-```
-
-## Mobile Responsiveness
-
-The application includes:
-
-- Adaptive navigation with a hamburger menu on mobile
-- Touch-friendly UI elements
-- Properly scaled content for all screen sizes
-- Optimized typography and spacing
-- Efficient layout for mobile bandwidth
+- **Supabase Connection Issues**: Check your environment variables and make sure Supabase is properly configured
+- **Next.js Build Errors**: Clear `.next` cache with `npm run clean` and retry
+- **Module Not Found Errors**: Run `npm install` to ensure all dependencies are installed
 
 ## License
 
-ISC License
+This project is proprietary software. All rights reserved.
+
+## Support
+
+For support, please contact the development team.
