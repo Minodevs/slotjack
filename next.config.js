@@ -8,11 +8,9 @@ console.log(`Building for: ${isProd ? 'Production' : 'Development'} | Vercel: ${
 const nextConfig = {
   output: isProd ? 'standalone' : undefined,
   reactStrictMode: true,
-  swcMinify: true, // Use SWC minification for better performance
   
   images: {
     domains: ['localhost'],
-    unoptimized: false, // Always optimize images for better performance
     remotePatterns: [
       {
         protocol: 'https',
@@ -55,32 +53,7 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  
-  // Webpack configuration
-  webpack: (config, { dev, isServer }) => {
-    // Only enable these optimizations in production
-    if (!dev) {
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        chunkIds: 'deterministic',
-        realContentHash: true, // Add content hash based on file contents
-        flagIncludedChunks: true,
-      };
-    }
-    
-    return config;
-  },
-  
-  experimental: {
-    // Enable features to improve build process
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', 'date-fns', 'framer-motion'],
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
-  },
+  }
 };
 
 module.exports = nextConfig; 
