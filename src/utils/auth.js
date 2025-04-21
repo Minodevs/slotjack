@@ -364,33 +364,72 @@ export const getCurrentUser = async () => {
  */
 export const updateProfile = async (data) => {
   try {
+    console.log('Updating profile with data:', data);
+    
+    // First update local storage user data
+    const currentUser = getUser();
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...data };
+      
+      // Special handling for social accounts to ensure they're properly merged
+      if (data.socialAccounts) {
+        // Make sure we don't lose existing social account data
+        updatedUser.socialAccounts = {
+          ...(currentUser.socialAccounts || {}),
+          ...data.socialAccounts
+        };
+        console.log('Updated social accounts:', updatedUser.socialAccounts);
+      }
+      
+      // Update last updated timestamp
+      updatedUser.lastUpdated = Date.now();
+      
+      // Save to localStorage
+      setUser(updatedUser);
+      
+      // Also persist social accounts separately for redundancy
+      if (updatedUser.socialAccounts) {
+        localStorage.setItem('user_social_accounts', JSON.stringify(updatedUser.socialAccounts));
+      }
+    }
+    
+    // Try to update in Supabase if available
     const supabase = await getSupabaseClient();
+    if (!supabase) {
+      console.log('Supabase client not available. Profile updated only in localStorage.');
+      return { user: currentUser };
+    }
+    
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      throw new Error('Not authenticated');
+      console.warn('Not authenticated with Supabase. Profile updated only in localStorage.');
+      return { user: currentUser };
+    }
+    
+    // Prepare data for Supabase update
+    let supabaseData = { ...data };
+    
+    // Special handling for timestamp to ensure it's in the correct format
+    if (!supabaseData.lastUpdated) {
+      supabaseData.lastUpdated = Date.now();
     }
     
     // Update profile in database
     const { data: updatedProfile, error: updateError } = await supabase
       .from('profiles')
-      .update(data)
+      .update(supabaseData)
       .eq('id', user.id)
       .select()
       .single();
     
     if (updateError) {
-      console.error('Profile update error:', updateError);
-      throw new Error('Failed to update profile');
+      console.error('Profile update error in Supabase:', updateError);
+      console.log('Profile was updated in localStorage but not in Supabase.');
+      return { user: currentUser };
     }
     
-    // Update local user data
-    const currentUser = getUser();
-    if (currentUser) {
-      const updatedUser = { ...currentUser, ...data };
-      setUser(updatedUser);
-    }
-    
+    console.log('Profile updated successfully in both localStorage and Supabase:', updatedProfile);
     return { user: updatedProfile };
   } catch (error) {
     console.error('Update profile error:', error);

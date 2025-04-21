@@ -92,14 +92,35 @@ export default function ProfilePage() {
       router.push('/giris');
     } else if (user) {
       setName(user.name || '');
+      
+      // Fix any issues with registered users data
+      fixRegisteredUsersData(user);
+      
       // Initialize social accounts from user data if available
-      if (user.socialAccounts) {
+      if (user.socialAccounts && Object.keys(user.socialAccounts).length > 0) {
+        console.log('Loading social accounts from user data:', user.socialAccounts);
         setSocialAccounts(user.socialAccounts);
+        // Also save to localStorage for persistence
+        localStorage.setItem('user_social_accounts', JSON.stringify(user.socialAccounts));
       } else {
-        // If no social accounts exist in user data, initialize with empty object
+        // If no social accounts exist in user data, initialize with empty object or from localStorage
         const storedAccounts = localStorage.getItem('user_social_accounts');
         if (storedAccounts) {
-          setSocialAccounts(JSON.parse(storedAccounts));
+          try {
+            const parsedAccounts = JSON.parse(storedAccounts);
+            console.log('Loading social accounts from localStorage:', parsedAccounts);
+            setSocialAccounts(parsedAccounts);
+            
+            // Also update the user object if we have accounts in localStorage but not in the user object
+            if (Object.keys(parsedAccounts).length > 0) {
+              updateProfile({ socialAccounts: parsedAccounts });
+            }
+          } catch (e) {
+            console.error('Error parsing stored social accounts:', e);
+            setSocialAccounts({});
+          }
+        } else {
+          setSocialAccounts({});
         }
       }
       
@@ -291,14 +312,31 @@ export default function ProfilePage() {
       
       setSocialAccounts(updatedSocialAccounts);
       
+      // Store in localStorage to ensure it persists
+      localStorage.setItem('user_social_accounts', JSON.stringify(updatedSocialAccounts));
+      
       // Update user profile with social accounts
       updateProfile({ socialAccounts: updatedSocialAccounts });
+
+      // Update user in localStorage directly to ensure consistency
+      const currentUser = JSON.parse(localStorage.getItem('slotjack_current_user') || '{}');
+      if (currentUser && currentUser.id) {
+        currentUser.socialAccounts = updatedSocialAccounts;
+        localStorage.setItem('slotjack_current_user', JSON.stringify(currentUser));
+      }
       
       // Sync to admin panel format for immediate visibility
       const registeredUsersStr = localStorage.getItem('slotjack_registered_users');
       if (registeredUsersStr && user) {
         const registeredUsers = JSON.parse(registeredUsersStr);
         if (user.email && registeredUsers[user.email]) {
+          // Update social accounts in registered users
+          if (!registeredUsers[user.email].socialAccounts) {
+            registeredUsers[user.email].socialAccounts = {};
+          }
+          registeredUsers[user.email].socialAccounts = updatedSocialAccounts;
+          
+          // Also update social verifications for admin panel
           if (!registeredUsers[user.email].socialVerifications) {
             registeredUsers[user.email].socialVerifications = {};
           }
@@ -501,6 +539,67 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error saving sponsor entries:', error);
       setIsSaving(false);
+    }
+  };
+
+  // Helper function to fix registered users data
+  const fixRegisteredUsersData = (currentUser: any) => {
+    if (!currentUser || !currentUser.email) return;
+    
+    try {
+      const registeredUsersStr = localStorage.getItem('slotjack_registered_users');
+      if (!registeredUsersStr) return;
+      
+      const registeredUsers = JSON.parse(registeredUsersStr);
+      if (!registeredUsers[currentUser.email]) return;
+      
+      let userData = registeredUsers[currentUser.email];
+      let needsUpdate = false;
+      
+      // Ensure socialAccounts exists
+      if (!userData.socialAccounts && currentUser.socialAccounts) {
+        userData.socialAccounts = currentUser.socialAccounts;
+        needsUpdate = true;
+      }
+      
+      // Ensure socialVerifications exists
+      if (!userData.socialVerifications) {
+        userData.socialVerifications = {};
+        needsUpdate = true;
+      }
+      
+      // Sync verified social accounts between structures
+      if (currentUser.socialAccounts) {
+        Object.keys(currentUser.socialAccounts).forEach(key => {
+          if (key.endsWith('_verified')) return;
+          
+          const isVerified = currentUser.socialAccounts[`${key}_verified`] === 'true';
+          const username = currentUser.socialAccounts[key];
+          
+          if (isVerified && username) {
+            // Update socialVerifications to match
+            if (!userData.socialVerifications[key] || 
+                userData.socialVerifications[key].username !== username) {
+              
+              userData.socialVerifications[key] = {
+                platform: key,
+                isVerified: true,
+                username: username,
+                verifiedAt: userData.socialVerifications[key]?.verifiedAt || Date.now()
+              };
+              needsUpdate = true;
+            }
+          }
+        });
+      }
+      
+      if (needsUpdate) {
+        registeredUsers[currentUser.email] = userData;
+        localStorage.setItem('slotjack_registered_users', JSON.stringify(registeredUsers));
+        console.log('Fixed registered users data for:', currentUser.email);
+      }
+    } catch (error) {
+      console.error('Error fixing registered users data:', error);
     }
   };
 
@@ -800,6 +899,7 @@ export default function ProfilePage() {
                 {/* Social Media Verification Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {socialPlatforms.map(platform => {
+                    const accountValue = socialAccounts[platform.id] || '';
                     const isVerified = socialAccounts[`${platform.id}_verified`] === 'true';
                     
                     return (
@@ -818,7 +918,7 @@ export default function ProfilePage() {
                             />
                           </div>
                           <span className="font-medium">{platform.name}</span>
-                          {isVerified && (
+                          {isVerified && accountValue && (
                             <span className="ml-auto bg-green-600 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
                               <Check className="w-3 h-3 mr-1" /> Kaydedildi
                             </span>
@@ -830,20 +930,27 @@ export default function ProfilePage() {
                             type="text"
                             placeholder={`${platform.name} Kullanıcı Adınız`}
                             className="flex-grow bg-gray-700 rounded-lg px-3 py-2 text-sm"
-                            value={socialAccounts[platform.id] || ''}
+                            value={accountValue}
                             onChange={(e) => setSocialAccounts({...socialAccounts, [platform.id]: e.target.value})}
-                            disabled={isVerified}
+                            disabled={!!(isVerified && accountValue)}
                           />
                           <button
                             onClick={() => handleSocialAccountUpdate(platform.id)}
                             className={`ml-2 text-white text-sm font-medium px-3 py-2 rounded ${
-                              isVerified ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#FF6B00] hover:bg-opacity-90'
+                              isVerified && accountValue ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#FF6B00] hover:bg-opacity-90'
                             }`}
-                            disabled={isVerified}
+                            disabled={!!(isVerified && accountValue)}
                           >
-                            {isVerified ? 'Kaydedildi' : 'Kaydet'}
+                            {isVerified && accountValue ? 'Kaydedildi' : 'Kaydet'}
                           </button>
                         </div>
+                        
+                        {isVerified && accountValue && (
+                          <div className="mt-2 text-sm text-gray-400 flex items-center">
+                            <span className="text-green-400 mr-1">✓</span>
+                            {platform.name} hesabınız doğrulandı
+                          </div>
+                        )}
                       </div>
                     );
                   })}
