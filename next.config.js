@@ -1,25 +1,18 @@
 /** @type {import('next').NextConfig} */
 
 const isProd = process.env.NODE_ENV === 'production';
-const isNetlify = process.env.NETLIFY === 'true';
-const shouldExport = process.env.NEXT_EXPORT === 'true';
+const isVercel = process.env.VERCEL === 'true' || process.env.VERCEL === '1';
 
-console.log(`Building for: ${isProd ? 'Production' : 'Development'} | Netlify: ${isNetlify} | Export: ${shouldExport}`);
+console.log(`Building for: ${isProd ? 'Production' : 'Development'} | Vercel: ${isVercel}`);
 
 const nextConfig = {
   output: isProd ? 'standalone' : undefined,
   reactStrictMode: true,
   swcMinify: true, // Use SWC minification for better performance
   
-  // Force fully static exports for Netlify
-  trailingSlash: isProd, // Add trailing slashes in production for better compatibility
-  
-  // Prevent partial static generation - force all or nothing
-  staticPageGenerationTimeout: 180, // 3 minutes timeout for static generation
-  
   images: {
-    domains: ['localhost', 'dulcet-tanuki-9e2ad9.netlify.app'],
-    unoptimized: !isProd, // Only optimize in production
+    domains: ['localhost'],
+    unoptimized: false, // Always optimize images for better performance
     remotePatterns: [
       {
         protocol: 'https',
@@ -75,32 +68,6 @@ const nextConfig = {
         realContentHash: true, // Add content hash based on file contents
         flagIncludedChunks: true,
       };
-      
-      // Force all pages to be included in the build
-      if (isServer) {
-        console.log('Configuring server-side build to include all pages');
-        config.optimization.splitChunks = {
-          cacheGroups: {
-            commons: {
-              name: 'commons',
-              chunks: 'all',
-              minChunks: 2,
-            },
-          },
-        };
-      }
-    }
-    
-    // Log the compile progress to debug build process
-    if (process.env.DEBUG_BUILD === 'true') {
-      const { ProgressPlugin } = require('webpack');
-      config.plugins.push(
-        new ProgressPlugin({
-          handler(percentage, message) {
-            console.log(`${(percentage * 100).toFixed(2)}% ${message}`);
-          },
-        })
-      );
     }
     
     return config;
@@ -108,11 +75,11 @@ const nextConfig = {
   
   experimental: {
     // Enable features to improve build process
-    optimizeCss: false, // Disable CSS optimization to avoid critters dependency issues
-    optimizePackageImports: isProd ? ['lucide-react', 'date-fns', 'framer-motion'] : [],
-    turbotrace: isProd ? {
-      logLevel: 'error',
-    } : undefined,
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', 'date-fns', 'framer-motion'],
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 
