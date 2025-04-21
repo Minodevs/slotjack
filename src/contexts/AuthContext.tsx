@@ -52,7 +52,7 @@ interface AuthContextType {
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<boolean>;
   updateJackPoints: (amount: number, description: string, type: Transaction['type']) => Promise<Transaction | null>;
   getRecentTransactions: (limit?: number) => Transaction[];
   updateProfile: (data: UpdateProfileData) => Promise<boolean>;
@@ -609,35 +609,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+
+      // First try the old localStorage-based authentication
+      const registeredUsers = getRegisteredUsers();
+      const lowerEmail = email.toLowerCase().trim();
       
-      const { user: authUser } = await authService.login(email, password);
+      if (registeredUsers[lowerEmail]) {
+        if (registeredUsers[lowerEmail].password === password) {
+          // Get or create user data from registered user
+          let userData: User = {
+            id: registeredUsers[lowerEmail].id || Math.random().toString(36).slice(2),
+            email: lowerEmail,
+            name: registeredUsers[lowerEmail].name || lowerEmail.split('@')[0],
+            jackPoints: registeredUsers[lowerEmail].jackPoints || 10,
+            transactions: registeredUsers[lowerEmail].transactions || [],
+            lastUpdated: Date.now(),
+            hasReceivedInitialBonus: registeredUsers[lowerEmail].hasReceivedInitialBonus || false,
+            rank: mapStringToUserRank(registeredUsers[lowerEmail].rank),
+            isVerified: registeredUsers[lowerEmail].isVerified || false,
+            avatar: registeredUsers[lowerEmail].avatar,
+            phoneNumber: registeredUsers[lowerEmail].phoneNumber,
+            phoneVerified: registeredUsers[lowerEmail].phoneVerified || false,
+            socialAccounts: registeredUsers[lowerEmail].socialAccounts || {}
+          };
+          
+          // Update last login time
+          registeredUsers[lowerEmail].lastLogin = Date.now();
+          
+          // Save back to localStorage
+          saveRegisteredUsers(registeredUsers);
+          setUser(userData);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+          
+          setLoading(false);
+          return;
+        } else {
+          throw new Error('Hatalı şifre');
+        }
+      }
       
-      // Convert to proper User type with enum
-      const userData: User = {
-        id: authUser.id,
-        email: authUser.email,
-        name: authUser.name,
-        jackPoints: authUser.jackPoints || 0,
-        transactions: authUser.transactions || [],
-        lastUpdated: authUser.lastUpdated || Date.now(),
-        hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
-        rank: mapStringToUserRank(authUser.rank),
-        isVerified: authUser.isVerified || false,
-        avatar: authUser.avatar || undefined,
-        phoneNumber: authUser.phoneNumber || undefined,
-        phoneVerified: authUser.phoneVerified || false,
-        socialAccounts: authUser.socialAccounts || {},
-      };
-      
-      setUser(userData);
-      
-      // Refresh leaderboard after login
-      refreshLeaderboard();
-      
-      return;
+      // If local auth fails, try Supabase
+      try {
+        // API-based authentication logic 
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: lowerEmail, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Giriş başarısız');
+        }
+        
+        // Update user state with response data
+        setUser(data.user);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+      } catch (apiError) {
+        console.error('API login failed:', apiError);
+        throw new Error('Giriş yapılamadı. E-posta veya şifre hatalı olabilir.');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error instanceof Error ? error.message : error.toString());
+      setError(error.message);
+      setLoading(false);
       throw error;
     } finally {
       setLoading(false);
@@ -650,34 +686,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      const { user: authUser } = await authService.register(email, password, name);
+      // Normalize email
+      const lowerEmail = email.toLowerCase().trim();
       
-      // Convert to proper User type with enum
+      // Check if email already exists in local storage
+      const registeredUsers = getRegisteredUsers();
+      if (registeredUsers[lowerEmail]) {
+        throw new Error('Bu e-posta adresi zaten kullanılıyor');
+      }
+      
+      // Create user ID
+      const userId = Math.random().toString(36).slice(2);
+      
+      // Create user locally first
       const userData: User = {
-        id: authUser.id,
-        email: authUser.email,
-        name: authUser.name,
-        jackPoints: authUser.jackPoints || 0,
-        transactions: authUser.transactions || [],
-        lastUpdated: authUser.lastUpdated || Date.now(),
-        hasReceivedInitialBonus: authUser.hasReceivedInitialBonus || false,
-        rank: mapStringToUserRank(authUser.rank),
-        isVerified: authUser.isVerified || false,
-        avatar: authUser.avatar || undefined,
-        phoneNumber: authUser.phoneNumber || undefined,
-        phoneVerified: authUser.phoneVerified || false,
-        socialAccounts: authUser.socialAccounts || {},
+        id: userId,
+        email: lowerEmail,
+        name: name || lowerEmail.split('@')[0],
+        jackPoints: 500, // Initial bonus
+        transactions: [],
+        lastUpdated: Date.now(),
+        hasReceivedInitialBonus: true,
+        rank: UserRank.NORMAL,
+        isVerified: false,
+        avatar: undefined,
+        phoneNumber: undefined,
+        phoneVerified: false,
+        socialAccounts: {}
       };
       
-      setUser(userData);
+      // Add initial bonus transaction
+      const bonusTransaction = createTransaction(
+        500,
+        'Hoş geldin bonusu',
+        'bonus'
+      );
+      userData.transactions.push(bonusTransaction);
       
-      // Refresh leaderboard after registration
-      refreshLeaderboard();
+      // Add to registered users
+      registeredUsers[lowerEmail] = {
+        email: lowerEmail,
+        name,
+        password,
+        verified: false,
+        provider: 'email',
+        hasReceivedInitialBonus: true,
+        rank: UserRank.NORMAL,
+        isVerified: false,
+        id: userId,
+        jackPoints: 500,
+        transactions: [bonusTransaction],
+        registrationDate: Date.now()
+      };
       
+      // Save to localStorage
+      saveRegisteredUsers(registeredUsers);
+      
+      // Update leaderboard
+      updateLeaderboard(userData);
+      
+      // Try to also register with Supabase if available
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: lowerEmail, password, name })
+        });
+        
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          console.warn('API registration failed, but local registration succeeded:', data.error);
+          // Continue with local auth since we already set up the user
+        }
+      } catch (apiError) {
+        console.error('API registration failed, but local registration succeeded:', apiError);
+        // Continue with local auth since we already set up the user
+      }
+      
+      setLoading(false);
       return;
     } catch (error: any) {
       console.error('Registration error:', error);
-      setError(error instanceof Error ? error.message : error.toString());
+      setError(error.message);
+      setLoading(false);
       throw error;
     } finally {
       setLoading(false);
@@ -688,19 +779,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
-      setError(null);
       
-      // Log out user with Supabase
-      await authService.logout();
+      // Clear local storage authentication data
+      localStorage.removeItem(USER_STORAGE_KEY);
       
-      // Clear user state
+      // Try to sign out from Supabase as well
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (apiError) {
+        console.error('API logout failed, but local logout succeeded:', apiError);
+        // Continue with local signout since API logout is not critical
+      }
+      
+      // Clear cookies related to authentication
+      document.cookie.split(';').forEach(c => {
+        document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      });
+      
+      // Reset user state
       setUser(null);
       
-      // Redirect to home page
-      navigate('/');
-    } catch (error: any) {
+      return true;
+    } catch (error) {
       console.error('Logout error:', error);
-      setError('Çıkış sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      return false;
     } finally {
       setLoading(false);
     }
