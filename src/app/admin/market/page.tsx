@@ -209,43 +209,48 @@ export default function AdminMarketPage() {
           const supabase = await getSupabaseClient();
           
           // Try to get items from Supabase
-          const { data: supabaseItems, error } = await supabase
-            .from(MARKET_ITEMS_TABLE)
-            .select('*')
-            .order('id');
-          
-          if (error) {
-            console.error(`Error loading items from Supabase (attempt ${attempt}):`, error);
+          if (supabase) {
+            const { data: supabaseItems, error } = await supabase
+              .from(MARKET_ITEMS_TABLE)
+              .select('*')
+              .order('id');
             
-            if (attempt < 2) {
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000)); 
-              continue;
-            }
-            throw error;
-          }
-          
-          if (supabaseItems && supabaseItems.length > 0) {
-            // Successfully got items from Supabase
-            console.log('Loaded items from Supabase:', supabaseItems.length);
-            
-            // Add cache busting to image URLs
-            const timestamp = Date.now();
-            const processedItems = supabaseItems.map((item: MarketItem) => {
-              if (item.imageUrl && !item.imageUrl.includes('?')) {
-                return { ...item, imageUrl: `${item.imageUrl}?t=${timestamp}` };
+            if (error) {
+              console.error(`Error loading items from Supabase (attempt ${attempt}):`, error);
+              
+              if (attempt < 2) {
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 1000)); 
+                continue;
               }
-              return item;
-            });
+              throw error;
+            }
             
-            setMarketItems(processedItems);
-            // Update localStorage for backup
-            localStorage.setItem(MARKET_ITEMS_STORAGE_KEY, JSON.stringify(processedItems));
-            setLoading(false);
-            return;
+            if (supabaseItems && supabaseItems.length > 0) {
+              // Successfully got items from Supabase
+              console.log('Loaded items from Supabase:', supabaseItems.length);
+              
+              // Add cache busting to image URLs
+              const timestamp = Date.now();
+              const processedItems = supabaseItems.map((item: MarketItem) => {
+                if (item.imageUrl && !item.imageUrl.includes('?')) {
+                  return { ...item, imageUrl: `${item.imageUrl}?t=${timestamp}` };
+                }
+                return item;
+              });
+              
+              setMarketItems(processedItems);
+              // Update localStorage for backup
+              localStorage.setItem(MARKET_ITEMS_STORAGE_KEY, JSON.stringify(processedItems));
+              setLoading(false);
+              return;
+            } else {
+              console.log('No items found in Supabase');
+              throw new Error('No items found in Supabase');
+            }
           } else {
-            console.log('No items found in Supabase');
-            throw new Error('No items found in Supabase');
+            console.log('Supabase client is null, skipping this data source');
+            throw new Error('Failed to initialize Supabase client');
           }
         } catch (supabaseError) {
           if (attempt < 2) {
@@ -380,85 +385,70 @@ export default function AdminMarketPage() {
   
   // Save items directly to Supabase with better error handling
   const saveItemsToSupabase = async (items: MarketItem[]): Promise<{ success: boolean, message?: string }> => {
-    let retryCount = 0;
-    const maxRetries = 2;
-    
-    while (retryCount <= maxRetries) {
-      try {
-        if (retryCount > 0) {
-          console.log(`Retry attempt ${retryCount}/${maxRetries} for Supabase save...`);
-          // Add a delay before retry
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
+    try {
+      console.log('Attempting to save items directly to Supabase...');
+      const supabase = await createClient();
+      
+      if (!supabase) {
+        console.error('Failed to create Supabase client');
+        return { success: false, message: 'Failed to connect to database' };
+      }
+      
+      // First, get existing items
+      const { data: existingItems, error: fetchError } = await supabase
+        .from(MARKET_ITEMS_TABLE)
+        .select('id');
         
-        console.log('Connecting to Supabase...');
-        const supabase = await createClient();
-        
-        // Test the connection with a simple query
-        try {
-          const { error: testError } = await supabase
-            .from('health_check')
-            .select('*')
-            .limit(1)
-            .maybeSingle();
+      if (fetchError) {
+        console.error('Error fetching existing items:', fetchError);
+        return { success: false, message: fetchError.message };
+      }
+      
+      // Convert to a Set of IDs for quick lookups
+      const existingIds = new Set(existingItems?.map(item => item.id) || []);
+      
+      // Separate items into those that need insertion vs update
+      const itemsToInsert = items.filter(item => !existingIds.has(item.id));
+      const itemsToUpdate = items.filter(item => existingIds.has(item.id));
+      
+      console.log(`Items to insert: ${itemsToInsert.length}, Items to update: ${itemsToUpdate.length}`);
+      
+      // Perform inserts if needed
+      if (itemsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from(MARKET_ITEMS_TABLE)
+          .insert(itemsToInsert);
           
-          // If error is about table not existing, that's actually fine
-          // It means our connection works
-          if (testError && !testError.message.includes('does not exist')) {
-            throw testError;
-          }
-        } catch (testError: any) {
-          // If it's a relation not found error, connection is fine
-          if (testError.message && testError.message.includes('does not exist')) {
-            console.log('Supabase connection test OK (table not found)');
-          } else {
-            throw testError;
-          }
-        }
-        
-        // First delete all existing items
-        console.log('Deleting existing items...');
-        const { error: deleteError } = await supabase
-          .from(MARKET_ITEMS_TABLE)
-          .delete()
-          .not('id', 'eq', '');
-        
-        if (deleteError) {
-          console.error('Error deleting existing items:', deleteError);
-          return { success: false, message: deleteError.message };
-        }
-        
-        // Then insert new items
-        console.log(`Inserting ${items.length} items...`);
-        const { data, error: insertError } = await supabase
-          .from(MARKET_ITEMS_TABLE)
-          .insert(items)
-          .select();
-        
         if (insertError) {
           console.error('Error inserting items:', insertError);
           return { success: false, message: insertError.message };
         }
-        
-        console.log('Successfully saved items to Supabase:', data?.length || 0);
-        return { success: true, message: `Saved ${data?.length || 0} items to database` };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`Supabase save attempt ${retryCount + 1} failed:`, errorMessage);
-        
-        if (retryCount >= maxRetries) {
-          console.error('All Supabase save attempts failed');
-          // Since we already saved to localStorage, we can still consider this a partial success
-          return { success: true, message: 'Saved to local storage only (offline mode)' };
-        }
-        
-        // Increment retry counter for next attempt
-        retryCount++;
       }
+      
+      // Perform updates if needed, one at a time to avoid conflicts
+      for (const item of itemsToUpdate) {
+        const { error: updateError } = await supabase
+          .from(MARKET_ITEMS_TABLE)
+          .update(item)
+          .eq('id', item.id);
+          
+        if (updateError) {
+          console.error(`Error updating item ${item.id}:`, updateError);
+          // Continue with other updates even if one fails
+        }
+      }
+      
+      return { 
+        success: true, 
+        message: `Successfully saved ${itemsToInsert.length} new items and updated ${itemsToUpdate.length} existing items` 
+      };
+    } catch (error) {
+      console.error('Error in saveItemsToSupabase:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : String(error)
+      };
     }
-    
-    // This should never be reached due to the loop exit conditions
-    return { success: false, message: 'Unknown error saving items' };
   };
 
   // Add this function after the saveItemsToSupabase function
@@ -544,23 +534,28 @@ export default function AdminMarketPage() {
   // Helper function to get a Supabase client with retries
   const getSupabaseClient = async () => {
     const MAX_RETRIES = 2;
+    let attempt = 0;
     let lastError = null;
     
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    while (attempt < MAX_RETRIES) {
+      attempt++;
       try {
         console.log(`Creating Supabase client (attempt ${attempt}/${MAX_RETRIES})...`);
-        const client = await createClient();
         
-        // Simple connectivity test
+        const client = await createClient();
+        if (!client) {
+          throw new Error('Failed to create Supabase client (null client returned)');
+        }
+        
+        // Test the connection with a simple query
         try {
           const { error: testError } = await client
             .from('health_check')
             .select('*')
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
           
           // If the error is about table not existing, that's fine
-          // It means connection works but table doesn't exist
+          // It means our connection works
           if (testError && 
               !testError.message.includes('relation "health_check" does not exist') &&
               !testError.message.includes('does not exist')) {
@@ -570,21 +565,19 @@ export default function AdminMarketPage() {
           console.log('Supabase client created successfully');
           return client;
         } catch (testError: any) {
-          // If it's a relation does not exist error, the connection is fine
-          if (testError.message && (
-              testError.message.includes('relation "health_check" does not exist') ||
-              testError.message.includes('does not exist'))) {
-            console.log('Supabase connection good (health check table not found)');
+          // If it's a relation not found error, connection is fine
+          if (testError.message && testError.message.includes('does not exist')) {
+            console.log('Supabase connection test OK (table not found)');
             return client;
+          } else {
+            throw testError;
           }
-          throw testError;
         }
       } catch (error: any) {
         lastError = error;
         console.error(`Failed to create Supabase client (attempt ${attempt}/${MAX_RETRIES}):`, error);
         
         if (attempt < MAX_RETRIES) {
-          // Wait before retry with exponential backoff
           const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
           console.log(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -592,7 +585,6 @@ export default function AdminMarketPage() {
       }
     }
     
-    // If we've exhausted all retries
     console.error(`Failed to create Supabase client after ${MAX_RETRIES} attempts`);
     throw lastError || new Error('Failed to create Supabase client');
   };
@@ -1789,6 +1781,54 @@ export default function AdminMarketPage() {
                   </div>
                   
                   <input type="hidden" name="category" value="betting" />
+                </div>
+                
+                {/* Image Upload Section */}
+                <div className="mb-6">
+                  <label className="block text-gray-400 mb-2">Ürün Resmi</label>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-32 h-32 bg-gray-700 rounded-md overflow-hidden relative flex items-center justify-center">
+                      {(imagePreview || itemFormData.imageUrl) ? (
+                        <img 
+                          src={imagePreview || itemFormData.imageUrl} 
+                          alt="Preview" 
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <Package className="w-12 h-12 text-gray-500" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col space-y-2">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                          className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
+                        >
+                          <Upload className="w-5 h-5 mr-2" />
+                          Dosya Seç
+                        </button>
+                        <input
+                          type="file"
+                          id="image-upload"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </div>
+                      
+                      {imageFile && (
+                        <div className="text-xs text-gray-400">
+                          Seçilen dosya: {imageFile.name} ({Math.round(imageFile.size / 1024)} KB)
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-400">
+                        Desteklenen formatlar: JPG, PNG, GIF, WebP (max 5MB)
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 {error && (

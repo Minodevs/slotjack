@@ -25,11 +25,19 @@ export const createClient = async (retryCount = 3) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
     
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase environment variables:',
-        !supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : '',
-        !supabaseKey ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : '');
-      throw new Error('Missing required Supabase configuration');
+    // Check if environment variables are properly configured
+    if (!supabaseUrl || supabaseUrl === 'your-supabase-project-url' || 
+        !supabaseKey || supabaseKey === 'your-supabase-anon-key') {
+      console.warn('Supabase is not properly configured on server. Using local storage authentication only.');
+      return null;
+    }
+    
+    // Validate URL format to prevent invalid URL errors
+    try {
+      new URL(supabaseUrl);
+    } catch (error) {
+      console.error('Invalid Supabase URL format:', error);
+      return null;
     }
 
     // Create the Supabase client with error handling and retries
@@ -97,10 +105,11 @@ export const createClient = async (retryCount = 3) => {
       }
     }
     
-    // If we've exhausted all retries, throw the last error
-    throw new Error(`Supabase client initialization failed after ${retryCount} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+    // If we've exhausted all retries, return null instead of throwing
+    console.error(`Supabase client initialization failed after ${retryCount} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+    return null;
   } catch (error) {
     console.error('Error creating Supabase server client:', error);
-    throw error;
+    return null;
   }
 } 
